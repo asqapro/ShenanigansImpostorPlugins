@@ -1,0 +1,55 @@
+ImpostorServer ideas:
+
+=============General gameplay=============
+
+Game starts, vision gets set to really low for crewmates. With each successful task a crewmate performs, their vision increases, but only for them.
+
+--------------------------------------------
+
+Infected gamemode. Kills can't be disabled, but people are infected when an infected person touches them
+
+--------------------------------------------
+
+===========================================
+
+=============Messing with people=============
+
+if(e.Game.Player.Name == "SupHomie")
+{
+    e.Game.Player.Hat = 72;
+}
+
+(hat 72 is called Fred in the game files)
+
+--------------------------------------------
+
+if(e.Game.Player.Name.Contains("Lexus"))
+{
+    e.Game.Player.Name = "Neaderthal";
+}
+
+--------------------------------------------
+
+Set player speed to very low, very high, or freeze them completely. Could also fall under general gameplay
+
+--------------------------------------------
+
+===========================================
+
+=============Server configurations=============
+
+Allow players to assign pre-recorded messages to numbers, then /whisper <player> <number> to have the server send that message to a player
+(Can be done through admin web interface, or creating a private game and setting the messages while alone)
+For example:
+	- Adam creates the following pre-recorded messages:
+		- 1: I'm the Impostor.
+		- 2: Follow me.
+		- 3: Let's kill Bryan first.
+	- In game, Adam types:
+		- /whisper Nicholas 3
+	- Only Nicholas would see:
+		- "(Server) Adam said: Let's kill Bryan first."
+
+--------------------------------------------
+
+===========================================
