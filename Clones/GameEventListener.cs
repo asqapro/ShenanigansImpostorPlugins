@@ -7,70 +7,51 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Impostor.Plugins.Infected.Handlers
+namespace Impostor.Plugins.Clones.Handlers
 {
     public class GameEventListener : IEventListener
     {
-        private readonly ILogger<InfectedPlugin> _logger;
+        private readonly ILogger<ClonesPlugin> _logger;
 
-        public GameEventListener(ILogger<InfectedPlugin> logger)
+        public GameEventListener(ILogger<ClonesPlugin> logger)
         {
             _logger = logger;
         }
 
-        public bool someoneDied = false;
-        public IInnerPlayerControl whoDied;
+        //public bool someoneDied = false;
+        //public IInnerPlayerControl whoDied;
 
-        /// <summary>
-        ///     An example event listener.
-        /// </summary>
-        /// <param name="e">
-        ///     The event you want to listen for.
-        /// </param>
         [EventListener]
         public void OnGameStarted(IGameStartedEvent e)
         {
             _logger.LogInformation($"Game is starting.");
-            // This prints out for all players if they are impostor or crewmate.
+            int maxCloneCount = (e.Game.PlayerCount - 1) / 2 + 1;
+            int cloneACount = 0;
+            int cloneBCount = 0;
             Random rd = new Random();
-            int rd_num = rd.Next(0, e.Game.PlayerCount - e.Game.Options.NumImpostors - 1);
-            int rd_perm_num = rd_num;
+            int rdMum;
             foreach (var player in e.Game.Players)
             {
+                rdMum = rd.Next(0, 1);
                 var info = player.Character.PlayerInfo;
                 var playerEdit = player.Character;
-                var isImpostor = info.IsImpostor;
-                if (isImpostor)
+                if ((rdMum == 0 && cloneACount < maxCloneCount) || cloneBCount >= maxCloneCount)
                 {
-                    if (rd_num == player.Client.Id)
-                    {
-                        rd_num = rd.Next(0, e.Game.PlayerCount - e.Game.Options.NumImpostors - 1);
-                    }
-                    _logger.LogInformation($"- {info.PlayerName} is an impostor.");
-                    playerEdit.SetHatAsync(84);
-                    playerEdit.SetColorAsync(2);
-                    playerEdit.SetSkinAsync(0f);
-                    playerEdit.SetNameAsync("Infected");
+                    playerEdit.SetNameAsync("A Clones");
+                    playerEdit.SetColorAsync(1);
+                    playerEdit.SetHatAsync(13);
+                    playerEdit.SetSkinAsync(4);
+                    playerEdit.SetPetAsync(1);
+                    cloneACount++;
                 }
                 else
                 {
-                    if (rd_perm_num == player.Client.Id)
-                    {
-                        playerEdit.SetNameAsync("Crewmates chief");
-                        playerEdit.SetColorAsync(1);
-                        playerEdit.SetHatAsync(13);
-                        playerEdit.SetSkinAsync(4);
-                    }
-                    else
-                    {
-                        playerEdit.SetHatAsync(10);
-                        playerEdit.SetColorAsync(10);
-                        playerEdit.SetSkinAsync(0f);
-                        playerEdit.SetNameAsync("Crewmate");
-                    }
-                    _logger.LogInformation($"- {info.PlayerName} is a crewmate.");
-                    _logger.LogInformation($"{rd_perm_num} is number 1");
-                    _logger.LogInformation($"{player.Client.Id} is the id");
+                    playerEdit.SetNameAsync("B Clones");
+                    playerEdit.SetHatAsync(10);
+                    playerEdit.SetColorAsync(10);
+                    playerEdit.SetSkinAsync(0f);
+                    playerEdit.SetPetAsync(6);
+                    cloneBCount++;
                 }
             }
         }
@@ -94,14 +75,6 @@ namespace Impostor.Plugins.Infected.Handlers
         [EventListener]
         public void OnPlayerMurder(IPlayerMurderEvent e)
         {
-            _logger.LogInformation($"killed {e.Victim.PlayerInfo.PlayerName}");
-            e.Victim.SetNameAsync("Infected");
-            e.Victim.SetHatAsync(84);
-            e.Victim.SetColorAsync(2);
-            e.ClientPlayer.Game.Options.NumImpostors++;
-            List<IInnerPlayerControl> pInfected = new List<IInnerPlayerControl>();
-            pInfected.Add(e.Victim);
-            e.Game.SetInfectedAsync(pInfected);
         }
     }
 }

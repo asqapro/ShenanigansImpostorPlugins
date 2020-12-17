@@ -9,12 +9,6 @@ using System.Linq;
 
 namespace Impostor.Plugins.Infected.Handlers
 {
-    /// <summary>
-    ///     A class that listens for two events.
-    ///     It may be more but this is just an example.
-    ///
-    ///     Make sure your class implements <see cref="IEventListener"/>.
-    /// </summary>
     public class GameEventListener : IEventListener
     {
         private readonly ILogger<InfectedPlugin> _logger;
@@ -27,12 +21,6 @@ namespace Impostor.Plugins.Infected.Handlers
         public bool someoneDied = false;
         public IInnerPlayerControl whoDied;
 
-        /// <summary>
-        ///     An example event listener.
-        /// </summary>
-        /// <param name="e">
-        ///     The event you want to listen for.
-        /// </param>
         [EventListener]
         public void OnGameStarted(IGameStartedEvent e)
         {
