@@ -12,13 +12,13 @@ namespace Impostor.Plugins.Clones
         name: "Example",
         author: "AeonLucid",
         version: "1.0.0")]
-    public class ClonesPlugin : PluginBase
+    public class Clones : PluginBase
     {
-        private readonly ILogger<ClonesPlugin> _logger;
+        private readonly ILogger<Clones> _logger;
         private readonly IEventManager _eventManager;
         private IDisposable _unregister;
 
-        public ClonesPlugin(ILogger<ClonesPlugin> logger, IEventManager eventManager)
+        public Clones(ILogger<Clones> logger, IEventManager eventManager)
         {
             _logger = logger;
             _eventManager = eventManager;

@@ -11,9 +11,9 @@ namespace Impostor.Plugins.Infected.Handlers
 {
     public class GameEventListener : IEventListener
     {
-        private readonly ILogger<InfectedPlugin> _logger;
+        private readonly ILogger<Infected> _logger;
 
-        public GameEventListener(ILogger<InfectedPlugin> logger)
+        public GameEventListener(ILogger<Infected> logger)
         {
             _logger = logger;
         }

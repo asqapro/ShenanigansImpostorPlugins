@@ -12,13 +12,13 @@ namespace Impostor.Plugins.Infected
         name: "Example",
         author: "AeonLucid",
         version: "1.0.0")]
-    public class InfectedPlugin : PluginBase
+    public class Infected : PluginBase
     {
-        private readonly ILogger<InfectedPlugin> _logger;
+        private readonly ILogger<Infected> _logger;
         private readonly IEventManager _eventManager;
         private IDisposable _unregister;
 
-        public InfectedPlugin(ILogger<InfectedPlugin> logger, IEventManager eventManager)
+        public Infected(ILogger<Infected> logger, IEventManager eventManager)
         {
             _logger = logger;
             _eventManager = eventManager;

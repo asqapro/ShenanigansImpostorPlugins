@@ -11,9 +11,9 @@ namespace Impostor.Plugins.Clones.Handlers
 {
     public class GameEventListener : IEventListener
     {
-        private readonly ILogger<ClonesPlugin> _logger;
+        private readonly ILogger<Clones> _logger;
 
-        public GameEventListener(ILogger<ClonesPlugin> logger)
+        public GameEventListener(ILogger<Clones> logger)
         {
             _logger = logger;
         }
