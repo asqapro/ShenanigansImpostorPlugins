@@ -2,23 +2,23 @@
 using System.Threading.Tasks;
 using Impostor.Api.Events.Managers;
 using Impostor.Api.Plugins;
-using Impostor.Plugins.Clones.Handlers;
+using Impostor.Plugins.PluginLoader.Handlers;
 using Microsoft.Extensions.Logging;
 
-namespace Impostor.Plugins.Clones
+namespace Impostor.Plugins.PluginLoader
 {
     [ImpostorPlugin(
-        package: "gg.impostor.Clones",
+        package: "gg.impostor.example",
         name: "Example",
         author: "AeonLucid",
         version: "1.0.0")]
-    public class Clones : PluginBase
+    public class PluginLoader : PluginBase
     {
-        private readonly ILogger<Clones> _logger;
+        private readonly ILogger<PluginLoader> _logger;
         private readonly IEventManager _eventManager;
         private IDisposable _unregister;
 
-        public Clones(ILogger<Clones> logger, IEventManager eventManager)
+        public PluginLoader(ILogger<PluginLoader> logger, IEventManager eventManager)
         {
             _logger = logger;
             _eventManager = eventManager;

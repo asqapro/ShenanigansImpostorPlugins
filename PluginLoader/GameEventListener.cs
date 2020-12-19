@@ -7,15 +7,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Impostor.Plugins.Clones.Handlers
+namespace Impostor.Plugins.PluginLoader.Handlers
 {
     public class GameEventListener : IEventListener
     {
-        private readonly ILogger<Clones> _logger;
+        private readonly ILogger<PluginLoader> _logger;
 
-        private Api.Net.IClientPlayer imp;
-
-        public GameEventListener(ILogger<Clones> logger)
+        public GameEventListener(ILogger<PluginLoader> logger)
         {
             _logger = logger;
         }
@@ -34,10 +32,6 @@ namespace Impostor.Plugins.Clones.Handlers
             int rdMum;
             foreach (var player in e.Game.Players)
             {
-                if (player.Character.PlayerInfo.IsImpostor)
-                {
-                    imp = player;
-                }
                 rdMum = rd.Next(0, 1);
                 var info = player.Character.PlayerInfo;
                 var playerEdit = player.Character;
@@ -72,8 +66,8 @@ namespace Impostor.Plugins.Clones.Handlers
         public void OnPlayerChat(IPlayerChatEvent e)
         {
             _logger.LogInformation($"{e.PlayerControl.PlayerInfo.PlayerName} said {e.Message}");
-            e.PlayerControl.SetMurderedByAsync(imp);
         }
+
         [EventListener]
         public void OnGameCreated(IGameCreatedEvent e)
         {

@@ -15,22 +15,18 @@ namespace Impostor.Plugins.Example
     public class ExamplePlugin : PluginBase
     {
         private readonly ILogger<ExamplePlugin> _logger;
-        // Add the line below!
         private readonly IEventManager _eventManager;
-        // Add the line below!
         private IDisposable _unregister;
 
         public ExamplePlugin(ILogger<ExamplePlugin> logger, IEventManager eventManager)
         {
             _logger = logger;
-            // Add the line below!
             _eventManager = eventManager;
         }
 
         public override ValueTask EnableAsync()
         {
             _logger.LogInformation("Example is being enabled.");
-            // Add the line below!
             _unregister = _eventManager.RegisterListener(new GameEventListener(_logger));
             return default;
         }
@@ -38,7 +34,6 @@ namespace Impostor.Plugins.Example
         public override ValueTask DisableAsync()
         {
             _logger.LogInformation("Example is being disabled.");
-            // Add the line below!
             _unregister.Dispose();
             return default;
         }
