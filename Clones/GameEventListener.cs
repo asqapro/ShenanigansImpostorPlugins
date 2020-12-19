@@ -20,9 +20,6 @@ namespace Impostor.Plugins.Clones.Handlers
             _logger = logger;
         }
 
-        //public bool someoneDied = false;
-        //public IInnerPlayerControl whoDied;
-
         [EventListener]
         public void OnGameStarted(IGameStartedEvent e)
         {
@@ -72,7 +69,6 @@ namespace Impostor.Plugins.Clones.Handlers
         public void OnPlayerChat(IPlayerChatEvent e)
         {
             _logger.LogInformation($"{e.PlayerControl.PlayerInfo.PlayerName} said {e.Message}");
-            e.PlayerControl.SetMurderedByAsync(imp);
         }
         [EventListener]
         public void OnGameCreated(IGameCreatedEvent e)
