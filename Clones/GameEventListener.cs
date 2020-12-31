@@ -4,6 +4,7 @@ using Impostor.Api.Net.Inner.Objects;
 using Impostor.Api.Games;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Timers;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -13,16 +14,20 @@ namespace Impostor.Plugins.Clones.Handlers
     {
         private readonly ILogger<Clones> _logger;
 
-        private Api.Net.IClientPlayer imp;
-
         public GameEventListener(ILogger<Clones> logger)
         {
             _logger = logger;
         }
 
+        private Api.Net.IClientPlayer bombPlayer;
+        private bool bombPlayerSet = false;
+        private Api.Net.IClientPlayer imp;
+        private IGame g;
+
         [EventListener]
         public void OnGameStarted(IGameStartedEvent e)
         {
+            g = e.Game;
             _logger.LogInformation($"Game is starting.");
             int maxCloneCount = (e.Game.PlayerCount - 1) / 2 + 1;
             int cloneACount = 0;
@@ -35,12 +40,17 @@ namespace Impostor.Plugins.Clones.Handlers
                 {
                     imp = player;
                 }
+                else if (!bombPlayerSet)
+                {
+                    bombPlayer = player;
+                    bombPlayerSet = true;
+                }
                 rdMum = rd.Next(0, 1);
                 var info = player.Character.PlayerInfo;
                 var playerEdit = player.Character;
                 if ((rdMum == 0 && cloneACount < maxCloneCount) || cloneBCount >= maxCloneCount)
                 {
-                    playerEdit.SetNameAsync("A Clones");
+                    playerEdit.SetNameAsync("Cool Clones");
                     playerEdit.SetColorAsync(1);
                     playerEdit.SetHatAsync(13);
                     playerEdit.SetSkinAsync(4);
@@ -49,7 +59,7 @@ namespace Impostor.Plugins.Clones.Handlers
                 }
                 else
                 {
-                    playerEdit.SetNameAsync("B Clones");
+                    playerEdit.SetNameAsync("Cooler Clones");
                     playerEdit.SetHatAsync(10);
                     playerEdit.SetColorAsync(10);
                     playerEdit.SetSkinAsync(0f);
@@ -57,6 +67,8 @@ namespace Impostor.Plugins.Clones.Handlers
                     cloneBCount++;
                 }
             }
+
+
         }
 
         [EventListener]

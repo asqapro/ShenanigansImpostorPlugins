@@ -1,0 +1,12 @@
+﻿Role list
+
+Jester (neutral) (must get voted off the ship to win)
+
+Vigilante (good) (can shoot and kill a player once a game during a meeting by using a chat command)
+
+Arsonist (evil) (can periodically douse players in gasoline by touching them, then light all doused players on fire, killing them, during a meeting using a chat command)
+
+Gunsmith (good) (can give a player a gun once a game, which that player can use to shoot anyone once with during a meeting using a chat command)
+
+Old Maid (neutral) (touch a player to swap roles with them. Old Maid cannot win)
+
