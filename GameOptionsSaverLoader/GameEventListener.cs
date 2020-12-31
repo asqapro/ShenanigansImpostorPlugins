@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace Impostor.Plugins.GameOptionsSaverLoader.Handlers
 {
@@ -39,35 +40,50 @@ namespace Impostor.Plugins.GameOptionsSaverLoader.Handlers
                     }
                     
                     string fileName = s[1];
-                    if(command == "/save")
+                    if(!isAlphaNumeric(fileName))
                     {
-                        using (BinaryWriter configWriter = new BinaryWriter(File.Open(fileName, FileMode.Create)))
+                        serverResponse = "[ff0000ff]" + "Filename must not contain spaces or special characters []";
+                        await ServerMessage(e.ClientPlayer.Character, e.ClientPlayer.Character, serverResponse);
+                        return;
+                    }
+
+                    if(e.ClientPlayer.IsHost)
+                    {
+                        if(command == "/save")
                         {
-                            e.Game.Options.Serialize(configWriter, 3 /*or maybe e.Game.Version, but the options are 1, 2, or 3*/);
-                            serverResponse = "[ff0000ff]" + "Saving game config file: " + fileName + "[]";
-                            await ServerMessage(e.ClientPlayer.Character, e.ClientPlayer.Character, serverResponse);
+                            using (BinaryWriter configWriter = new BinaryWriter(File.Open(fileName, FileMode.Create)))
+                            {
+                                e.Game.Options.Serialize(configWriter, 3 /*or maybe e.Game.Version, but the options are 1, 2, or 3*/);
+                                serverResponse = "[ff0000ff]" + "Saving game config file: " + fileName + "[]";
+                                await ServerMessage(e.ClientPlayer.Character, e.ClientPlayer.Character, serverResponse);
+                            }
+                            if (!File.Exists(fileName))
+                            {
+                                serverResponse = "[ff0000ff]" + "Failed to save game config: " + fileName + "[]";
+                                await ServerMessage(e.ClientPlayer.Character, e.ClientPlayer.Character, serverResponse);
+                            }
                         }
-                        if (!File.Exists(fileName))
+                        else if(command == "/load")
                         {
-                            serverResponse = "[ff0000ff]" + "Failed to save game config: " + fileName + "[]";
-                            await ServerMessage(e.ClientPlayer.Character, e.ClientPlayer.Character, serverResponse);
+                            if (File.Exists(fileName))
+                            {
+                                byte[] gameOptions = File.ReadAllBytes(fileName);
+                                var memory = new ReadOnlyMemory<byte>(gameOptions);
+                                e.Game.Options.Deserialize(memory);
+                                serverResponse = "[ff0000ff]" + "Successfully loaded game config file: " + fileName + "[]";
+                                await ServerMessage(e.ClientPlayer.Character, e.ClientPlayer.Character, serverResponse);
+                            }
+                            else
+                            {
+                                serverResponse = "[ff0000ff]" + "Failed to load game config: " + fileName + "[]";
+                                await ServerMessage(e.ClientPlayer.Character, e.ClientPlayer.Character, serverResponse);
+                            }
                         }
                     }
-                    else if(command == "/load")
+                    else
                     {
-                        if (File.Exists(fileName))
-                        {
-                            byte[] gameOptions = File.ReadAllBytes(fileName);
-                            var memory = new ReadOnlyMemory<byte>(gameOptions);
-                            e.Game.Options.Deserialize(memory);
-                            serverResponse = "[ff0000ff]" + "Successfully loaded game config file: " + fileName + "[]";
-                            await ServerMessage(e.ClientPlayer.Character, e.ClientPlayer.Character, serverResponse);
-                        }
-                        else
-                        {
-                            serverResponse = "[ff0000ff]" + "Failed to load game config: " + fileName + "[]";
-                            await ServerMessage(e.ClientPlayer.Character, e.ClientPlayer.Character, serverResponse);
-                        }
+                        serverResponse = "[ff0000ff]" + "Must be game host to save file: " + fileName + "[]";
+                        await ServerMessage(e.ClientPlayer.Character, e.ClientPlayer.Character, serverResponse);
                     }
                 }
             }
@@ -103,6 +119,12 @@ namespace Impostor.Plugins.GameOptionsSaverLoader.Handlers
 
             await sender.SetColorAsync(currentColor);
             await sender.SetNameAsync(currentName);
+        }
+
+        public static Boolean isAlphaNumeric(string strToCheck)
+        {
+            Regex rg = new Regex(@"^[a-zA-Z0-9\.]*$");
+            return rg.IsMatch(strToCheck);
         }
     }
 }
