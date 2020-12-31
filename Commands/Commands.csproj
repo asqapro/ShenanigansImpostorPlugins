@@ -9,9 +9,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="Impostor.Api">
-      <HintPath>..\..\ImpostorServer\Impostor\src\Impostor.Api\bin\Debug\netstandard2.0\Impostor.Api.dll</HintPath>
-    </Reference>
+    <ProjectReference Include="..\..\Impostor\src\Impostor.Api\Impostor.Api.csproj" />
   </ItemGroup>
 
 </Project>
