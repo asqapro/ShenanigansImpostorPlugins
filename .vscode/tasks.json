@@ -4,9 +4,21 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "build",
+            "label": "build all plugins",
             "type": "shell",
             "command": "dotnet build",
+            "problemMatcher": []
+        },
+        {
+            "label": "Change GameOptionsSaverLoader to local API",
+            "type": "shell",
+            "command": "cd GameOptionsSaverLoader && dotnet remove reference Impostor.Api && dotnet add reference ../../Impostor/src/Impostor.Api/Impostor.Api.csproj && dotnet add package Microsoft.Extensions.Logging --version 5.0.0 && dotnet build",
+            "problemMatcher": []
+        },
+        {
+            "label": "Change GameOptionsSaverLoader to nuget API",
+            "type": "shell",
+            "command": "cd GameOptionsSaverLoader && dotnet remove reference ../../Impostor/src/Impostor.Api/Impostor.Api.csproj && dotnet remove package Microsoft.Extensions.Logging && dotnet add package Impostor.Api --version 1.2.2-ci.121 && dotnet build",
             "problemMatcher": []
         }
     ]
