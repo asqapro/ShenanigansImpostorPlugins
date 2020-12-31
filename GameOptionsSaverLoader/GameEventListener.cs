@@ -70,6 +70,7 @@ namespace Impostor.Plugins.GameOptionsSaverLoader.Handlers
                                 byte[] gameOptions = File.ReadAllBytes(fileName);
                                 var memory = new ReadOnlyMemory<byte>(gameOptions);
                                 e.Game.Options.Deserialize(memory);
+                                await e.Game.SyncSettingsAsync();
                                 serverResponse = "[ff0000ff]" + "Successfully loaded game config file: " + fileName + "[]";
                                 await ServerMessage(e.ClientPlayer.Character, e.ClientPlayer.Character, serverResponse);
                             }
