@@ -17,7 +17,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpecialRoles", "SpecialRole
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameOptionsSaverLoader", "GameOptionsSaverLoader\GameOptionsSaverLoader.csproj", "{7777F3CD-8C23-452C-A28B-DCE090EDD577}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommandsBase", "CommandsBase\CommandsBase.csproj", "{73710A86-0B45-4F58-9063-F0EED74E26BF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommandHandler", "CommandHandler\CommandHandler.csproj", "{A7A19C98-FD05-4E1F-9EC7-F8BD84B92057}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -53,10 +53,10 @@ Global
 		{7777F3CD-8C23-452C-A28B-DCE090EDD577}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7777F3CD-8C23-452C-A28B-DCE090EDD577}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7777F3CD-8C23-452C-A28B-DCE090EDD577}.Release|Any CPU.Build.0 = Release|Any CPU
-		{73710A86-0B45-4F58-9063-F0EED74E26BF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{73710A86-0B45-4F58-9063-F0EED74E26BF}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{73710A86-0B45-4F58-9063-F0EED74E26BF}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{73710A86-0B45-4F58-9063-F0EED74E26BF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A7A19C98-FD05-4E1F-9EC7-F8BD84B92057}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A7A19C98-FD05-4E1F-9EC7-F8BD84B92057}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A7A19C98-FD05-4E1F-9EC7-F8BD84B92057}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A7A19C98-FD05-4E1F-9EC7-F8BD84B92057}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
