@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpecialRoles", "SpecialRole
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameOptionsSaverLoader", "GameOptionsSaverLoader\GameOptionsSaverLoader.csproj", "{7777F3CD-8C23-452C-A28B-DCE090EDD577}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bomber", "Bomber\Bomber.csproj", "{D7690BE1-A562-4DD5-94AD-F397EF48ABB0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +53,10 @@ Global
 		{7777F3CD-8C23-452C-A28B-DCE090EDD577}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7777F3CD-8C23-452C-A28B-DCE090EDD577}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7777F3CD-8C23-452C-A28B-DCE090EDD577}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D7690BE1-A562-4DD5-94AD-F397EF48ABB0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D7690BE1-A562-4DD5-94AD-F397EF48ABB0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D7690BE1-A562-4DD5-94AD-F397EF48ABB0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D7690BE1-A562-4DD5-94AD-F397EF48ABB0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
