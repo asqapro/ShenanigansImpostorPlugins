@@ -169,6 +169,7 @@ namespace CommandHandler
             }
             catch
             {
+                commandList.Commands.Remove(commandName);
                 return RegisterResult.ServerError;
             }
 
