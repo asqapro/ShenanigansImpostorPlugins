@@ -1,0 +1,41 @@
+{
+    "Commands": {
+        "/kill": {
+            "Length": 2,
+            "Help": "/kill <target>",
+            "Hostonly": true,
+            "Message": "%s is killing %t"
+        },
+        "/whisper": {
+            "Length": 3,
+            "Help": "/whisper <target> '<Message>'",
+            "Hostonly": false,
+            "Message": "%s is whispering to %t"
+        },
+        "/setname": {
+            "Length": 2,
+            "Help": "/setname <name>",
+            "Hostonly": false,
+            "Message": "%s is setting name to %t"
+        },
+        "/save": {
+            "Length": 2,
+            "Help": "/save <filename>",
+            "Hostonly": true,
+            "Message": "%s is saving the game settings to %t"
+        },
+        "/load": {
+            "Length": 2,
+            "Help": "/load <filename>",
+            "Hostonly": true,
+            "Message": "%s is loading the game settings from %t"
+        }
+    },
+    "Enabled": {
+        "/kill": true,
+        "/whisper": true,
+        "/setname": true,
+        "/save": true,
+        "/load": true
+    }
+}

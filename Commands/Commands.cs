@@ -11,7 +11,7 @@ namespace Impostor.Plugins.Commands
     [ImpostorPlugin(
         package: "gg.impostor.commands",
         name: "Commands",
-        author: "AeonLucid",
+        author: "asqapro",
         version: "1.0.0")]
     public class Commands : PluginBase
     {
