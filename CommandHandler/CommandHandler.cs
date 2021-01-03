@@ -5,42 +5,57 @@ using System.Text.RegularExpressions;
 using System.Text.Json;
 using Impostor.Api.Net;
 
-namespace CommandsBase
+namespace CommandHandler
 {
-    public class CommandParser
+
+    public enum ValidateResult
     {
-        public Dictionary<String, Command> Commands {get; set;}
-        public Dictionary<String, bool> Enabled {get; set;}
+        ServerError,
+        DoesNotExist,
+        Disabled,
+        SyntaxError,
+        HostOnly,
+        Valid
+    }
+
+    public enum RegisterResult
+    {
+        ServerError,
+        AlreadyExists,
+        SyntaxError,
+        HelpError,
+        Success
+    }
+
+    public class CommandInfoParser
+    {
+        public Dictionary<String, CommandInfo> Commands {get; set;}
+    }
+
+    public class CommandInfo
+    {
+        public int Length {get; set;}
+        public String Help {get; set;}
+        public bool HostOnly {get; set;}
+        public bool Enabled {get; set;}
     }
 
     public class Command
     {
-        public int Length {get; set;}
+        public String CommandName {get; set;}
+        public String Target {get; set;}
+        public String Options {get; set;}
         public String Help {get; set;}
-        public bool Hostonly {get; set;}
-        public String Message {get; set;}
+        public ValidateResult Validation {get; set;}
     }
 
     public class CommandHandler
     {
-        public enum ValidateResult
-        {
-            ServerError,
-            DoesNotExist,
-            Disabled,
-            SyntaxError,
-            HostOnly,
-            Valid
-        }
+        private String commandSyntaxJson;
+        private CommandInfoParser commandList;
+        private String commandsFile = "CommandList.json";
 
-        public enum RegisterResult
-        {
-            AlreadyExists,
-            SyntaxError,
-            Success
-        }
-
-        public ValidateResult ValidateCommand(String toValidate, IClientPlayer sender)
+        private ValidateResult ValidateCommand(String toValidate, IClientPlayer sender)
         {
             String commandParsePattern = @"(/\w+)\s+((?:\w+\s*)+)('.*')*";
             var match = Regex.Match(toValidate, commandParsePattern);
@@ -52,13 +67,10 @@ namespace CommandsBase
 
             var commandValue = match.Groups[1].Value;
 
-            var commandsFile = "CommandList.json";
-            CommandParser commandList;
-
             try
             {
-                var commandSyntaxJson = File.ReadAllText(commandsFile);
-                commandList = JsonSerializer.Deserialize<CommandParser>(commandSyntaxJson);
+                commandSyntaxJson = File.ReadAllText(commandsFile);
+                commandList = JsonSerializer.Deserialize<CommandInfoParser>(commandSyntaxJson);
             }
             catch
             {
@@ -70,12 +82,12 @@ namespace CommandsBase
                 return ValidateResult.DoesNotExist;
             }
 
-            if (!commandList.Enabled[commandValue])
+            if (!commandList.Commands[commandValue].Enabled)
             {
                 return ValidateResult.Disabled;
             }
 
-            if (commandList.Commands[commandValue].Hostonly && !sender.IsHost)
+            if (commandList.Commands[commandValue].HostOnly && !sender.IsHost)
             {
                 return ValidateResult.HostOnly;
             }
@@ -88,8 +100,78 @@ namespace CommandsBase
             return ValidateResult.Valid;
         }
 
-        protected RegisterResult RegisterCommand()
+        public Command ParseCommand(String toParse, IClientPlayer sender)
         {
+            var parsed = new Command();
+            parsed.Validation = ValidateCommand(toParse, sender);
+            if (parsed.Validation != ValidateResult.Valid)
+            {
+                return parsed;
+            }
+            
+            String commandParsePattern = @"(/\w+)\s+((?:\w+\s*)+)('.*')*";
+            var match = Regex.Match(toParse, commandParsePattern);
+
+            var commandValue = match.Groups[1].Value;
+
+            parsed.CommandName = commandValue.Trim();
+            parsed.Target = match.Groups[2].Value.Trim();
+            parsed.Options = match.Groups[3].Value.Trim();
+            parsed.Help = commandList.Commands[commandValue].Help;
+
+            return parsed;
+        }
+
+        public RegisterResult RegisterCommand(String commandName, bool includesOptions, String helpMessage, bool hostOnly)
+        {
+
+            if (commandList.Commands.ContainsKey(commandName))
+            {
+                return RegisterResult.AlreadyExists;
+            }
+
+            String commandPattern = @"(/\w+)";
+            var match = Regex.Match(commandName, commandPattern);
+
+            if (!match.Groups[1].Success)
+            {
+                return RegisterResult.SyntaxError;
+            }
+
+            String helpPattern;
+            if (includesOptions)
+            {
+                helpPattern = @"(/\w+)\s+(<(?:\w+\s*)+>)\s+('<.+?>')";
+            }
+            else
+            {
+                helpPattern = @"(/\w+)\s+(<(?:\w+\s*)+>)$";
+            }
+
+            match = Regex.Match(helpMessage, helpPattern);
+            if (!match.Success)
+            {
+                return RegisterResult.HelpError;
+            }
+
+            var toRegister = new CommandInfo();
+            toRegister.Length = includesOptions ? 3 : 2;
+            toRegister.Help = helpMessage;
+            toRegister.HostOnly = hostOnly;
+            toRegister.Enabled = true;
+
+            commandList.Commands[commandName] = toRegister;
+
+            try
+            {
+                var registerJson = JsonSerializer.Serialize<CommandInfoParser>(commandList);
+                File.WriteAllText(commandsFile, registerJson);
+            }
+            catch
+            {
+                return RegisterResult.ServerError;
+            }
+
             return RegisterResult.Success;
         }
     }
