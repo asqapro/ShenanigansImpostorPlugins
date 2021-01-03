@@ -105,7 +105,9 @@ namespace Impostor.Plugins.Commands.Handlers
                 }
                 else if (parsedCommand.Validation == ValidateResult.SyntaxError)
                 {
-                    serverResponse = "Incorrect syntax. Proper syntax is: " + parsedCommand.Help;
+                    _logger.LogInformation("Incorrect syntax hit");
+                    serverResponse = "Incorrect syntax. Proper syntax is: " + parsedCommand.Help + "end";
+                    _logger.LogInformation(parsedCommand.Help);
                 }
                 else if (parsedCommand.Validation == ValidateResult.Valid)
                 {

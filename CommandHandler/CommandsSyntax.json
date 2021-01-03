@@ -3,31 +3,31 @@
         "/kill": {
             "Length": 2,
             "Help": "/kill <target>",
-            "Hostonly": true,
+            "HostOnly": true,
             "Enabled": true
         },
         "/whisper": {
             "Length": 3,
             "Help": "/whisper <target> '<Message>'",
-            "Hostonly": false,
+            "HostOnly": false,
             "Enabled": true
         },
         "/setname": {
             "Length": 2,
             "Help": "/setname <name>",
-            "Hostonly": false,
+            "HostOnly": false,
             "Enabled": true
         },
         "/save": {
             "Length": 2,
             "Help": "/save <filename>",
-            "Hostonly": true,
+            "HostOnly": true,
             "Enabled": true
         },
         "/load": {
             "Length": 2,
             "Help": "/load <filename>",
-            "Hostonly": true,
+            "HostOnly": true,
             "Enabled": true
         }
     }

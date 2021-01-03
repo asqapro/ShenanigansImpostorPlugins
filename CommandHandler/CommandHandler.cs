@@ -62,7 +62,7 @@ namespace CommandHandler
 
         private String commandSyntaxJson;
         private CommandInfoParser commandList;
-        private String commandsFile = "CommandList.json";
+        private String commandsFile = "CommandsSyntax.json";
 
         private ValidateResult ValidateCommand(String toValidate, IClientPlayer sender)
         {
@@ -74,7 +74,7 @@ namespace CommandHandler
                 return ValidateResult.SyntaxError;
             }
 
-            var commandValue = match.Groups[1].Value;
+            var commandValue = match.Groups[1].Value.Trim();
 
             try
             {
@@ -117,13 +117,12 @@ namespace CommandHandler
             {
                 return parsed;
             }
-            
             String commandParsePattern = @"(/\w+)\s+((?:\w+\s*)+)('.*')*";
             var match = Regex.Match(toParse, commandParsePattern);
 
-            var commandValue = match.Groups[1].Value;
+            var commandValue = match.Groups[1].Value.Trim();
 
-            parsed.CommandName = commandValue.Trim();
+            parsed.CommandName = commandValue;
             parsed.Target = match.Groups[2].Value.Trim();
             parsed.Options = match.Groups[3].Value.Trim();
             parsed.Help = commandList.Commands[commandValue].Help;
