@@ -49,8 +49,17 @@ namespace CommandHandler
         public ValidateResult Validation {get; set;}
     }
 
-    public class CommandHandler
+    public sealed class Handler
     {
+        private static readonly Lazy<Handler> lazy =
+            new Lazy<Handler>
+                (() => new Handler());
+
+        public static Handler Instance { get { return lazy.Value; } }
+
+        private Handler(){}
+
+
         private String commandSyntaxJson;
         private CommandInfoParser commandList;
         private String commandsFile = "CommandList.json";
