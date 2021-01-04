@@ -86,20 +86,12 @@ namespace CommandHandler
             var commandName = match.Groups[1].Value.Trim();
             if (commandName == "")
             {
-                commandName = toValidate.Trim();
+                commandName = toValidate.Split(" ")[0].Trim();
             }
 
             if (!commandList.Commands.ContainsKey(commandName))
             {
                 return ValidateResult.DoesNotExist;
-            }
-            else if (!commandList.Commands[commandName].Enabled)
-            {
-                return ValidateResult.Disabled;
-            }
-            else if (commandList.Commands[commandName].HostOnly && !sender.IsHost)
-            {
-                return ValidateResult.HostOnly;
             }
             else if (!match.Groups[2].Success && commandList.Commands[commandName].Length >= 2)
             {
@@ -108,6 +100,14 @@ namespace CommandHandler
             else if (!match.Groups[3].Success && commandList.Commands[commandName].Length == 3)
             {
                 return ValidateResult.MissingOptions;
+            }
+            else if (!commandList.Commands[commandName].Enabled)
+            {
+                return ValidateResult.Disabled;
+            }
+            else if (commandList.Commands[commandName].HostOnly && !sender.IsHost)
+            {
+                return ValidateResult.HostOnly;
             }
             else
             {
@@ -137,7 +137,7 @@ namespace CommandHandler
             var commandName = match.Groups[1].Value.Trim();
             if (commandName == "")
             {
-                commandName = toParse.Trim();
+                commandName = toParse.Split(" ")[0].Trim();
             }
 
             parsed.CommandName = commandName;
