@@ -84,8 +84,12 @@ namespace CommandHandler
             var match = Regex.Match(toValidate, commandParsePattern);
 
             var commandName = match.Groups[1].Value.Trim();
+            if (commandName == "")
+            {
+                commandName = toValidate.Trim();
+            }
 
-            if (!commandList.Commands.ContainsKey(commandName) && !commandList.Commands.ContainsKey(toValidate.Trim()))
+            if (!commandList.Commands.ContainsKey(commandName))
             {
                 return ValidateResult.DoesNotExist;
             }
