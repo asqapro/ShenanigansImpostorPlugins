@@ -135,6 +135,10 @@ namespace CommandHandler
             var match = Regex.Match(toParse, commandParsePattern);
 
             var commandName = match.Groups[1].Value.Trim();
+            if (commandName == "")
+            {
+                commandName = toParse.Trim();
+            }
 
             parsed.CommandName = commandName;
             parsed.Target = match.Groups[2].Value.Trim();
