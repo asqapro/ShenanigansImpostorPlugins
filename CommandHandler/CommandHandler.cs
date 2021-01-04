@@ -13,7 +13,8 @@ namespace CommandHandler
         ServerError,
         DoesNotExist,
         Disabled,
-        SyntaxError,
+        MissingTarget,
+        MissingOptions,
         HostOnly,
         Valid
     }
@@ -51,31 +52,20 @@ namespace CommandHandler
 
     public sealed class Handler
     {
+        private String commandSyntaxJson;
+        private CommandInfoParser commandList;
+        private String commandsFile = "CommandsSyntax.json";
+
+        private bool validateServerError;
+
         private static readonly Lazy<Handler> lazy =
             new Lazy<Handler>
                 (() => new Handler());
 
         public static Handler Instance { get { return lazy.Value; } }
 
-        private Handler(){}
-
-
-        private String commandSyntaxJson;
-        private CommandInfoParser commandList;
-        private String commandsFile = "CommandsSyntax.json";
-
-        private ValidateResult ValidateCommand(String toValidate, IClientPlayer sender)
+        private Handler()
         {
-            String commandParsePattern = @"(/\w+)\s+((?:\w+\s*)+)('.*')*";
-            var match = Regex.Match(toValidate, commandParsePattern);
-
-            if (!match.Groups[1].Success || !match.Groups[2].Success)
-            {
-                return ValidateResult.SyntaxError;
-            }
-
-            var commandValue = match.Groups[1].Value.Trim();
-
             try
             {
                 commandSyntaxJson = File.ReadAllText(commandsFile);
@@ -83,59 +73,75 @@ namespace CommandHandler
             }
             catch
             {
-                return ValidateResult.ServerError;
+                validateServerError = true;
             }
+            validateServerError = false;
+        }
 
-            Console.WriteLine($"Command value: {commandValue}");
-            Console.WriteLine($"Help message: {commandList.Commands[commandValue].Help}");
+        private ValidateResult ValidateCommand(String toValidate, IClientPlayer sender)
+        {
+            String commandParsePattern = @"(/\w+)\s+((?:\w+\s*)+)('.*')*";
+            var match = Regex.Match(toValidate, commandParsePattern);
 
-            if (!commandList.Commands.ContainsKey(commandValue))
+            var commandName = match.Groups[1].Value.Trim();
+
+            if (!commandList.Commands.ContainsKey(commandName))
             {
                 return ValidateResult.DoesNotExist;
             }
-
-            if (!commandList.Commands[commandValue].Enabled)
+            else if (!commandList.Commands[commandName].Enabled)
             {
                 return ValidateResult.Disabled;
             }
-
-            if (commandList.Commands[commandValue].HostOnly && !sender.IsHost)
+            else if (commandList.Commands[commandName].HostOnly && !sender.IsHost)
             {
                 return ValidateResult.HostOnly;
             }
-
-            if (!match.Groups[3].Success && commandList.Commands[commandValue].Length == 3)
+            else if (!match.Groups[2].Success && commandList.Commands[commandName].Length >= 2)
             {
-                return ValidateResult.SyntaxError;
+                return ValidateResult.MissingTarget;
             }
-
-            return ValidateResult.Valid;
+            else if (!match.Groups[3].Success && commandList.Commands[commandName].Length == 3)
+            {
+                return ValidateResult.MissingOptions;
+            }
+            else
+            {
+                return ValidateResult.Valid;
+            }
         }
 
         public Command ParseCommand(String toParse, IClientPlayer sender)
         {
             var parsed = new Command();
+
+            if (validateServerError)
+            {
+                parsed.Validation = ValidateResult.ServerError;
+                return parsed;
+            }
+            
             parsed.Validation = ValidateCommand(toParse, sender);
-            if (parsed.Validation != ValidateResult.Valid)
+            if (parsed.Validation == ValidateResult.DoesNotExist)
             {
                 return parsed;
             }
+            
             String commandParsePattern = @"(/\w+)\s+((?:\w+\s*)+)('.*')*";
             var match = Regex.Match(toParse, commandParsePattern);
 
-            var commandValue = match.Groups[1].Value.Trim();
+            var commandName = match.Groups[1].Value.Trim();
 
-            parsed.CommandName = commandValue;
+            parsed.CommandName = commandName;
             parsed.Target = match.Groups[2].Value.Trim();
             parsed.Options = match.Groups[3].Value.Trim();
-            parsed.Help = commandList.Commands[commandValue].Help;
+            parsed.Help = commandList.Commands[commandName].Help;
 
             return parsed;
         }
 
         public RegisterResult RegisterCommand(String commandName, bool includesOptions, String helpMessage, bool hostOnly)
         {
-
             if (commandList.Commands.ContainsKey(commandName))
             {
                 return RegisterResult.AlreadyExists;
@@ -185,6 +191,19 @@ namespace CommandHandler
             }
 
             return RegisterResult.Success;
+        }
+
+        public String GetCommandHelp(String commandName)
+        {
+            if (validateServerError)
+            {
+                return "Server experienced error";
+            }
+            if (!commandList.Commands.ContainsKey(commandName))
+            {
+                return "Command does not exist";
+            }
+            return commandList.Commands[commandName].Help;
         }
     }
 }

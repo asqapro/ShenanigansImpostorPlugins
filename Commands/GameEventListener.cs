@@ -103,12 +103,14 @@ namespace Impostor.Plugins.Commands.Handlers
                 {
                     serverResponse = "Only the host may use that command";
                 }
-                else if (parsedCommand.Validation == ValidateResult.SyntaxError)
+                else if (parsedCommand.Validation == ValidateResult.MissingTarget)
                 {
-                    _logger.LogInformation("Incorrect syntax hit");
-                    serverResponse = "Incorrect syntax. Proper syntax is: " + parsedCommand.Help + "end";
-                    _logger.LogInformation(parsedCommand.Help);
+                    serverResponse = "Missing command target. Proper syntax is: " + parsedCommand.Help;
                 }
+                else if (parsedCommand.Validation == ValidateResult.MissingOptions)
+                {
+                    serverResponse = "Missing command options. Proper syntax is: " + parsedCommand.Help;
+                }   
                 else if (parsedCommand.Validation == ValidateResult.Valid)
                 {
                     if (parsedCommand.CommandName == "/whisper")
