@@ -86,6 +86,9 @@ namespace CommandHandler
                 return ValidateResult.ServerError;
             }
 
+            Console.WriteLine($"Command value: {commandValue}");
+            Console.WriteLine($"Help message: {commandList.Commands[commandValue].Help}");
+
             if (!commandList.Commands.ContainsKey(commandValue))
             {
                 return ValidateResult.DoesNotExist;
