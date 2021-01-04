@@ -93,7 +93,7 @@ namespace Impostor.Plugins.Commands.Handlers
 
                 if (parsedCommand.Validation == ValidateResult.ServerError)
                 {
-                    serverResponse = "Server experienced an error. Inform the host <" + e.Game.Host.Character.PlayerInfo.PlayerName + ">";
+                    serverResponse = "Server experienced an error. Inform the host: \n<" + e.Game.Host.Character.PlayerInfo.PlayerName + ">";
                 }
                 else if (parsedCommand.Validation == ValidateResult.DoesNotExist)
                 {
@@ -105,11 +105,11 @@ namespace Impostor.Plugins.Commands.Handlers
                 }
                 else if (parsedCommand.Validation == ValidateResult.MissingTarget)
                 {
-                    serverResponse = "Missing command target. Proper syntax is: " + parsedCommand.Help;
+                    serverResponse = "Missing command target. Proper syntax is: \n" + parsedCommand.Help;
                 }
                 else if (parsedCommand.Validation == ValidateResult.MissingOptions)
                 {
-                    serverResponse = "Missing command options. Proper syntax is: " + parsedCommand.Help;
+                    serverResponse = "Missing command options. Proper syntax is: \n" + parsedCommand.Help;
                 }   
                 else if (parsedCommand.Validation == ValidateResult.Valid)
                 {

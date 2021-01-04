@@ -85,7 +85,7 @@ namespace CommandHandler
 
             var commandName = match.Groups[1].Value.Trim();
 
-            if (!commandList.Commands.ContainsKey(commandName))
+            if (!commandList.Commands.ContainsKey(commandName) && !commandList.Commands.ContainsKey(toValidate.Trim()))
             {
                 return ValidateResult.DoesNotExist;
             }
