@@ -3,11 +3,12 @@ using System.IO;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Text.Json;
+using System.Threading.Tasks;
 using Impostor.Api.Net;
+using Impostor.Api.Net.Inner.Objects;
 
 namespace CommandHandler
 {
-
     public enum ValidateResult
     {
         ServerError,
@@ -50,21 +51,37 @@ namespace CommandHandler
         public ValidateResult Validation {get; set;}
     }
 
-    public sealed class Handler
+    public sealed class CommandParser
     {
         private String commandSyntaxJson;
         private CommandInfoParser commandList;
         private String commandsFile = "CommandsSyntax.json";
 
-        private bool validateServerError;
+        private bool jsonServerError;
 
-        private static readonly Lazy<Handler> lazy =
-            new Lazy<Handler>
-                (() => new Handler());
+        private static readonly Lazy<CommandParser> lazy =
+            new Lazy<CommandParser>
+                (() => new CommandParser());
 
-        public static Handler Instance { get { return lazy.Value; } }
+        public static CommandParser Instance { get { return lazy.Value; } }
 
-        private Handler()
+        private CommandParser()
+        {
+            jsonServerError = false;
+            try
+            {
+                commandSyntaxJson = File.ReadAllText(commandsFile);
+                commandList = JsonSerializer.Deserialize<CommandInfoParser>(commandSyntaxJson);
+            }
+            catch
+            {
+                commandList = new CommandInfoParser();
+                commandList.Commands = new Dictionary<string, CommandInfo>();
+                jsonServerError = true;
+            }
+        }
+
+        private bool reloadCommands()
         {
             try
             {
@@ -73,9 +90,10 @@ namespace CommandHandler
             }
             catch
             {
-                validateServerError = true;
+                jsonServerError = true;
             }
-            validateServerError = false;
+            jsonServerError = false;
+            return jsonServerError;
         }
 
         private ValidateResult ValidateCommand(String toValidate, IClientPlayer sender)
@@ -119,7 +137,7 @@ namespace CommandHandler
         {
             var parsed = new Command();
 
-            if (validateServerError)
+            if (jsonServerError)
             {
                 parsed.Validation = ValidateResult.ServerError;
                 return parsed;
@@ -148,21 +166,22 @@ namespace CommandHandler
             return parsed;
         }
 
-        public RegisterResult RegisterCommand(String commandName, bool includesOptions, String helpMessage, bool hostOnly)
+        public RegisterResult RegisterCommand(String newCommandName, CommandInfo newCommand)
         {
-            if (commandList.Commands.ContainsKey(commandName))
+            if (commandList.Commands.ContainsKey(newCommandName))
             {
                 return RegisterResult.AlreadyExists;
             }
 
             String commandPattern = @"(/\w+)";
-            var match = Regex.Match(commandName, commandPattern);
+            var match = Regex.Match(newCommandName, commandPattern);
 
             if (!match.Groups[1].Success)
             {
                 return RegisterResult.SyntaxError;
             }
 
+            bool includesOptions = (newCommand.Length == 3);
             String helpPattern;
             if (includesOptions)
             {
@@ -173,28 +192,32 @@ namespace CommandHandler
                 helpPattern = @"(/\w+)\s+(<(?:\w+\s*)+>)$";
             }
 
-            match = Regex.Match(helpMessage, helpPattern);
+            match = Regex.Match(newCommand.Help, helpPattern);
             if (!match.Success)
             {
                 return RegisterResult.HelpError;
             }
 
-            var toRegister = new CommandInfo();
-            toRegister.Length = includesOptions ? 3 : 2;
-            toRegister.Help = helpMessage;
-            toRegister.HostOnly = hostOnly;
-            toRegister.Enabled = true;
-
-            commandList.Commands[commandName] = toRegister;
+            commandList.Commands[newCommandName] = newCommand;
 
             try
             {
-                var registerJson = JsonSerializer.Serialize<CommandInfoParser>(commandList);
+                var options = new JsonSerializerOptions
+                {
+                    WriteIndented = true,
+                    Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                };
+                var registerJson = JsonSerializer.Serialize<CommandInfoParser>(commandList, options);
                 File.WriteAllText(commandsFile, registerJson);
             }
             catch
             {
-                commandList.Commands.Remove(commandName);
+                commandList.Commands.Remove(newCommandName);
+                return RegisterResult.ServerError;
+            }
+
+            if (!reloadCommands())
+            {
                 return RegisterResult.ServerError;
             }
 
@@ -203,7 +226,7 @@ namespace CommandHandler
 
         public String GetCommandHelp(String commandName)
         {
-            if (validateServerError)
+            if (jsonServerError)
             {
                 return "Server experienced error";
             }
@@ -213,5 +236,10 @@ namespace CommandHandler
             }
             return commandList.Commands[commandName].Help;
         }
+    }
+
+    public class CommandManager
+    {
+        public Dictionary<String, Func<IInnerPlayerControl, Command, ValueTask<String>>> managers = new Dictionary<string, Func<IInnerPlayerControl, Command, ValueTask<string>>>();
     }
 }
