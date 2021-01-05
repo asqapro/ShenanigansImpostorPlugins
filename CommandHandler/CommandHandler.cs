@@ -36,10 +36,19 @@ namespace CommandHandler
 
     public class CommandInfo
     {
-        public int Length {get; set;}
+        public bool HasTarget {get; set;}
+        public bool HasOptions {get; set;}
         public String Help {get; set;}
         public bool HostOnly {get; set;}
         public bool Enabled {get; set;}
+        public CommandInfo(bool _hastarget = true, bool _hasoptions = false, String _help = "", bool _hostonly = false, bool _enabled = false)
+        {
+            HasTarget = _hastarget;
+            HasOptions = _hasoptions;
+            Help = _help;
+            HostOnly = _hostonly;
+            Enabled = _enabled;
+        }
     }
 
     public class Command
@@ -111,11 +120,11 @@ namespace CommandHandler
             {
                 return ValidateResult.DoesNotExist;
             }
-            else if (!match.Groups[2].Success && commandList.Commands[commandName].Length >= 2)
+            else if (!match.Groups[2].Success && commandList.Commands[commandName].HasTarget)
             {
                 return ValidateResult.MissingTarget;
             }
-            else if (!match.Groups[3].Success && commandList.Commands[commandName].Length == 3)
+            else if (!match.Groups[3].Success && commandList.Commands[commandName].HasOptions)
             {
                 return ValidateResult.MissingOptions;
             }
@@ -181,9 +190,8 @@ namespace CommandHandler
                 return RegisterResult.SyntaxError;
             }
 
-            bool includesOptions = (newCommand.Length == 3);
             String helpPattern;
-            if (includesOptions)
+            if (newCommand.HasOptions)
             {
                 helpPattern = @"(/\w+)\s+(<(?:\w+\s*)+>)\s+('<.+?>')";
             }

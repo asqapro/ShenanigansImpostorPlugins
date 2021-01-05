@@ -30,35 +30,22 @@ namespace Impostor.Plugins.Commands.Handlers
         public GameEventListener(ILogger<Commands> logger)
         {
             _logger = logger;
-            var commandList = @"{
-                ""/whisper"": {
-                    ""Length"": 3,
-                    ""Help"": ""/whisper <target> '<Message>'"",
-                    ""HostOnly"": false,
-                    ""Enabled"": true
-                },
-                ""/kill"": {
-                    ""Length"": 2,
-                    ""Help"": ""/kill <target>"",
-                    ""HostOnly"": true,
-                    ""Enabled"": true
-                },
-                ""/setname"": {
-                    ""Length"": 2,
-                    ""Help"": ""/setname <name>"",
-                    ""HostOnly"": true,
-                    ""Enabled"": true
-                }
-            }";
-            pluginCommands = JsonSerializer.Deserialize<Dictionary<String, CommandInfo>>(commandList);
-            manager = new CommandManager();
-            manager.managers["/whisper"] = handleWhisper;
-            manager.managers["/kill"] = handleKill;
-            manager.managers["/setname"] = handleSetName;
+            var whisperCommand = new CommandInfo(true, true, "/whisper <target> '<Message>'", false, true);
+            var killCommand = new CommandInfo(true, false, "/kill <target>", true, true);
+            var setNameCommand = new CommandInfo(true, false, "/setname <name>", false, true);
+            pluginCommands["/whisper"] = whisperCommand;
+            pluginCommands["/kill"] = killCommand;
+            pluginCommands["/setname"] = setNameCommand;
             foreach(var entry in pluginCommands)
             {
                 parser.RegisterCommand(entry.Key, entry.Value);
             }
+
+            manager = new CommandManager();
+            manager.managers["/whisper"] = handleWhisper;
+            manager.managers["/kill"] = handleKill;
+            manager.managers["/setname"] = handleSetName;
+            
         }
 
         /// <summary>

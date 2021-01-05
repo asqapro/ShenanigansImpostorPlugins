@@ -1,31 +1,36 @@
 {
     "Commands": {
         "/kill": {
-            "Length": 2,
+            "HasTarget": true,
+            "HasOptions": false,
             "Help": "/kill <target>",
             "HostOnly": true,
             "Enabled": true
         },
         "/whisper": {
-            "Length": 3,
+            "HasTarget": true,
+            "HasOptions": true,
             "Help": "/whisper <target> '<Message>'",
             "HostOnly": false,
             "Enabled": true
         },
         "/setname": {
-            "Length": 2,
+            "HasTarget": true,
+            "HasOptions": false,
             "Help": "/setname <name>",
             "HostOnly": false,
             "Enabled": true
         },
         "/save": {
-            "Length": 2,
+            "HasTarget": true,
+            "HasOptions": false,
             "Help": "/save <filename>",
             "HostOnly": true,
             "Enabled": true
         },
         "/load": {
-            "Length": 2,
+            "HasTarget": true,
+            "HasOptions": false,
             "Help": "/load <filename>",
             "HostOnly": true,
             "Enabled": true
