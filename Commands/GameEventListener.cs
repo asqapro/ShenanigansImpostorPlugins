@@ -24,7 +24,7 @@ namespace Impostor.Plugins.Commands.Handlers
         private readonly ILogger<Commands> _logger;
         private IGame _game;
         CommandParser parser = CommandParser.Instance;
-        private Dictionary<String, CommandInfo> pluginCommands; 
+        private Dictionary<String, CommandInfo> pluginCommands = new Dictionary<string, CommandInfo>(); 
         private CommandManager manager;
 
         public GameEventListener(ILogger<Commands> logger)
