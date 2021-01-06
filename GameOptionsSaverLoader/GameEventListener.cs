@@ -7,104 +7,125 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
 using System.IO;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text.RegularExpressions;
+using System.Collections.Generic;
+using CommandHandler;
 
 namespace Impostor.Plugins.GameOptionsSaverLoader.Handlers
 {
     public class GameEventListener : IEventListener
     {
         private readonly ILogger<GameOptionsSaverLoader> _logger;
+        private IGame _game;
+        CommandParser parser = CommandParser.Instance;
+        private Dictionary<String, CommandInfo> pluginCommands = new Dictionary<string, CommandInfo>(); 
+        private CommandManager manager;
 
         public GameEventListener(ILogger<GameOptionsSaverLoader> logger)
         {
             _logger = logger;
+            var saveCommand = new CommandInfo(true, false, "/save <filename.bin>", true, true);
+            var loadCommand = new CommandInfo(true, false, "/load <filename.bin>", true, true);
+            pluginCommands["/save"] = saveCommand;
+            pluginCommands["/load"] = loadCommand;
+            foreach(var entry in pluginCommands)
+            {
+                parser.RegisterCommand(entry.Key, entry.Value);
+            }
+
+            manager = new CommandManager();
+            manager.managers["/whisper"] = handleSave;
+            manager.managers["/kill"] = handleLoad;
+        }
+
+        private ValueTask<String> handleSave(IInnerPlayerControl sender, Command parsedCommand)
+        {
+            String success = "";
+            using (BinaryWriter configWriter = new BinaryWriter(File.Open(parsedCommand.Target, FileMode.Create)))
+            {
+                _game.Options.Serialize(configWriter, 3 /*or maybe e.Game.Version, but the options are 1, 2, or 3*/);
+                success = $"Saving game config file: {parsedCommand.Target}";
+            }
+            if (!File.Exists(parsedCommand.Target))
+            {
+                success = $"Failed to save game config: {parsedCommand.Target}";
+            }
+            return ValueTask.FromResult(success);
+        }
+
+        private async ValueTask<String> handleLoad(IInnerPlayerControl sender, Command parsedCommand)
+        {
+            if (File.Exists(parsedCommand.Target))
+            {
+                byte[] gameOptions = File.ReadAllBytes(parsedCommand.Target);
+                var memory = new ReadOnlyMemory<byte>(gameOptions);
+                _game.Options.Deserialize(memory);
+                await _game.SyncSettingsAsync();
+                return $"Successfully loaded game config file: {parsedCommand.Target}";
+            }
+            else
+            {
+                return $"Failed to load game config: {parsedCommand.Target}";
+            }
         }
 
         [EventListener]
         public async ValueTask OnPlayerChat(IPlayerChatEvent e)
         {
-            string serverResponse = "Command executed successfully";
-            if(e.Game.GameState != GameStates.Started)
+            if (_game == null)
             {
-                if(e.Message.StartsWith("/"))
+                _game = e.Game;
+            }
+            if(e.Message.StartsWith("/"))
+            {
+                String serverResponse = "Command executed successfully";
+                if(e.Game.GameState != GameStates.Started)
                 {
-                    string[] s = e.Message.Split(' ');
-                    string command = s[0];
-                    if(!validateCommand(s))
-                    {
-                        serverResponse = "[ff0000ff]" + "Valid syntax: " + command + " filename.extension []";
-                        await ServerMessage(e.ClientPlayer.Character, e.ClientPlayer.Character, serverResponse);
-                        return;
-                    }
-                    
-                    string fileName = s[1];
-                    if(!isAlphaNumeric(fileName))
-                    {
-                        serverResponse = "[ff0000ff]" + "Filename must not contain spaces or special characters []";
-                        await ServerMessage(e.ClientPlayer.Character, e.ClientPlayer.Character, serverResponse);
-                        return;
-                    }
+                    Command parsedCommand = parser.ParseCommand(e.Message, e.ClientPlayer);
 
-                    if(e.ClientPlayer.IsHost)
+                    if (parsedCommand.Validation == ValidateResult.ServerError)
                     {
-                        if(command == "/save")
-                        {
-                            using (BinaryWriter configWriter = new BinaryWriter(File.Open(fileName, FileMode.Create)))
-                            {
-                                e.Game.Options.Serialize(configWriter, 3 /*or maybe e.Game.Version, but the options are 1, 2, or 3*/);
-                                serverResponse = "[ff0000ff]" + "Saving game config file: " + fileName + "[]";
-                                await ServerMessage(e.ClientPlayer.Character, e.ClientPlayer.Character, serverResponse);
-                            }
-                            if (!File.Exists(fileName))
-                            {
-                                serverResponse = "[ff0000ff]" + "Failed to save game config: " + fileName + "[]";
-                                await ServerMessage(e.ClientPlayer.Character, e.ClientPlayer.Character, serverResponse);
-                            }
-                        }
-                        else if(command == "/load")
-                        {
-                            if (File.Exists(fileName))
-                            {
-                                byte[] gameOptions = File.ReadAllBytes(fileName);
-                                var memory = new ReadOnlyMemory<byte>(gameOptions);
-                                e.Game.Options.Deserialize(memory);
-                                await e.Game.SyncSettingsAsync();
-                                serverResponse = "[ff0000ff]" + "Successfully loaded game config file: " + fileName + "[]";
-                                await ServerMessage(e.ClientPlayer.Character, e.ClientPlayer.Character, serverResponse);
-                            }
-                            else
-                            {
-                                serverResponse = "[ff0000ff]" + "Failed to load game config: " + fileName + "[]";
-                                await ServerMessage(e.ClientPlayer.Character, e.ClientPlayer.Character, serverResponse);
-                            }
-                        }
+                        serverResponse = "Server experienced an error. Inform the host: \n<" + e.Game.Host.Character.PlayerInfo.PlayerName + ">";
+                    }
+                    else if (parsedCommand.Validation == ValidateResult.DoesNotExist)
+                    {
+                        serverResponse = "Command does not exist";
+                    }
+                    else if (parsedCommand.Validation == ValidateResult.HostOnly)
+                    {
+                        serverResponse = $"Must be game host to save file: {parsedCommand.Target}";
+                    }
+                    else if (parsedCommand.Validation == ValidateResult.MissingTarget)
+                    {
+                        serverResponse = "Missing command target. Proper syntax is: \n" + parsedCommand.Help;
+                    }
+                    else if (parsedCommand.Validation == ValidateResult.MissingOptions)
+                    {
+                        serverResponse = "Missing command options. Proper syntax is: \n" + parsedCommand.Help;
+                    }
+                    else if(!isAlphaNumeric(parsedCommand.Target))
+                    {
+                        serverResponse = "Filename must not contain spaces or special characters";
                     }
                     else
                     {
-                        serverResponse = "[ff0000ff]" + "Must be game host to save file: " + fileName + "[]";
-                        await ServerMessage(e.ClientPlayer.Character, e.ClientPlayer.Character, serverResponse);
+                        if (!manager.managers.ContainsKey(parsedCommand.CommandName))
+                        {
+                            serverResponse = "Invalid command or syntax";
+                        }
+                        else
+                        {
+                            serverResponse = await manager.managers[parsedCommand.CommandName](e.PlayerControl, parsedCommand);
+                        }
                     }
                 }
-            }
-            else
-            {
-                //Broadcast error message that "Cannot use command during game"
-                serverResponse = "[ff0000ff]" + "Command not allowed during active game." + "[]";
+                else
+                {
+                    //Broadcast error message that "Cannot use command during game"
+                    serverResponse = "Command not allowed during active game.";
+                }
+                serverResponse = "[ff0000ff]" + serverResponse + "[]";
                 await ServerMessage(e.ClientPlayer.Character, e.ClientPlayer.Character, serverResponse);
-            } 
-        }
-
-        bool validateCommand(string[] commandParts)
-        {
-            if(commandParts.Length == 2)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
             }
         }
 

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using System.Text.Json;
 using Impostor.Api.Events;
 using Impostor.Api.Events.Player;
 using Impostor.Api.Innersloth;
@@ -45,7 +44,6 @@ namespace Impostor.Plugins.Commands.Handlers
             manager.managers["/whisper"] = handleWhisper;
             manager.managers["/kill"] = handleKill;
             manager.managers["/setname"] = handleSetName;
-            
         }
 
         /// <summary>
@@ -185,7 +183,7 @@ namespace Impostor.Plugins.Commands.Handlers
                 else if (parsedCommand.Validation == ValidateResult.MissingOptions)
                 {
                     serverResponse = "Missing command options. Proper syntax is: \n" + parsedCommand.Help;
-                }   
+                }
                 else if (parsedCommand.Validation == ValidateResult.Valid)
                 {
                     if (!manager.managers.ContainsKey(parsedCommand.CommandName))

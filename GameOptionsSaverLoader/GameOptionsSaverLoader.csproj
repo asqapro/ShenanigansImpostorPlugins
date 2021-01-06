@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Impostor\src\Impostor.Api\Impostor.Api.csproj" />
+    <ProjectReference Include="..\CommandHandler\CommandHandler.csproj" />
   </ItemGroup>
 
   <ItemGroup>
