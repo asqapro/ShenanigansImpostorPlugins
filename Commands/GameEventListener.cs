@@ -24,7 +24,7 @@ namespace Impostor.Plugins.Commands.Handlers
         private IGame _game;
         CommandParser parser = CommandParser.Instance;
         private Dictionary<String, CommandInfo> pluginCommands = new Dictionary<string, CommandInfo>(); 
-        private CommandManager manager;
+        private CommandManager manager = CommandManager.Instance;
 
         public GameEventListener(ILogger<Commands> logger)
         {
@@ -43,7 +43,6 @@ namespace Impostor.Plugins.Commands.Handlers
                 parser.RegisterCommand(entry.Key, entry.Value);
             }
 
-            manager = new CommandManager();
             manager.managers["/whisper"] = handleWhisper;
             manager.managers["/kill"] = handleKill;
             manager.managers["/setname"] = handleSetName;

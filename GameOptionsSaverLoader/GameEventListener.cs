@@ -19,7 +19,7 @@ namespace Impostor.Plugins.GameOptionsSaverLoader.Handlers
         private IGame _game;
         CommandParser parser = CommandParser.Instance;
         private Dictionary<String, CommandInfo> pluginCommands = new Dictionary<string, CommandInfo>(); 
-        private CommandManager manager;
+        private CommandManager manager = CommandManager.Instance;
 
         public GameEventListener(ILogger<GameOptionsSaverLoader> logger)
         {
@@ -55,7 +55,6 @@ namespace Impostor.Plugins.GameOptionsSaverLoader.Handlers
                 }
             }
 
-            manager = new CommandManager();
             manager.managers["/save"] = handleSave;
             manager.managers["/load"] = handleLoad;
         }

@@ -81,11 +81,9 @@ namespace CommandHandler
             {
                 commandSyntaxJson = File.ReadAllText(commandsFile);
                 commandList = JsonSerializer.Deserialize<CommandInfoParser>(commandSyntaxJson);
-                Console.WriteLine("NO constructor error occured");
             }
             catch
             {
-                Console.WriteLine("constructor error occured");
                 commandList = new CommandInfoParser();
                 commandList.Commands = new Dictionary<string, CommandInfo>();
                 jsonServerError = true;
@@ -97,16 +95,12 @@ namespace CommandHandler
             jsonServerError = false;
             try
             {
-                Console.WriteLine("reload1");
                 commandSyntaxJson = File.ReadAllText(commandsFile);
-                Console.WriteLine("reload2");
                 Console.WriteLine(commandSyntaxJson);
                 commandList = JsonSerializer.Deserialize<CommandInfoParser>(commandSyntaxJson);
-                Console.WriteLine("reload3");
             }
             catch
             {
-                Console.WriteLine("reload4");
                 jsonServerError = true;
             }
             return jsonServerError;
@@ -255,8 +249,13 @@ namespace CommandHandler
         }
     }
 
-    public class CommandManager
+    public sealed class CommandManager
     {
+        private static readonly Lazy<CommandManager> lazy =
+            new Lazy<CommandManager>
+                (() => new CommandManager());
+        public static CommandManager Instance { get { return lazy.Value; } }
+
         public Dictionary<String, Func<IInnerPlayerControl, Command, ValueTask<String>>> managers = new Dictionary<string, Func<IInnerPlayerControl, Command, ValueTask<string>>>();
     }
 }
