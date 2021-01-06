@@ -24,18 +24,40 @@ namespace Impostor.Plugins.GameOptionsSaverLoader.Handlers
         public GameEventListener(ILogger<GameOptionsSaverLoader> logger)
         {
             _logger = logger;
-            var saveCommand = new CommandInfo(true, false, "/save <filename.bin>", true, true);
-            var loadCommand = new CommandInfo(true, false, "/load <filename.bin>", true, true);
+            var saveCommand = new CommandInfo();
+            saveCommand.manualCommandInfo(true, false, "/save <filename.bin>", true, true);
+            var loadCommand = new CommandInfo();
+            loadCommand.manualCommandInfo(true, false, "/load <filename.bin>", true, true);
             pluginCommands["/save"] = saveCommand;
             pluginCommands["/load"] = loadCommand;
             foreach(var entry in pluginCommands)
             {
-                parser.RegisterCommand(entry.Key, entry.Value);
+                RegisterResult result = parser.RegisterCommand(entry.Key, entry.Value);
+                if (result == RegisterResult.AlreadyExists)
+                {
+                    _logger.LogError($"Command already exists: {entry.Key}");
+                }
+                else if (result == RegisterResult.HelpError)
+                {
+                    _logger.LogError($"Error with help: {entry.Key}");
+                }
+                else if (result == RegisterResult.ServerError)
+                {
+                    _logger.LogError($"Server error occured: {entry.Key}");
+                }
+                else if (result == RegisterResult.SyntaxError)
+                {
+                    _logger.LogError($"Syntax error occured: {entry.Key}");
+                }
+                else if (result == RegisterResult.Success)
+                {
+                    _logger.LogError($"Successfully registered command: {entry.Key}");
+                }
             }
 
             manager = new CommandManager();
-            manager.managers["/whisper"] = handleSave;
-            manager.managers["/kill"] = handleLoad;
+            manager.managers["/save"] = handleSave;
+            manager.managers["/load"] = handleLoad;
         }
 
         private ValueTask<String> handleSave(IInnerPlayerControl sender, Command parsedCommand)

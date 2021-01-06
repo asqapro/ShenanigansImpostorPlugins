@@ -41,7 +41,7 @@ namespace CommandHandler
         public String Help {get; set;}
         public bool HostOnly {get; set;}
         public bool Enabled {get; set;}
-        public CommandInfo(bool _hastarget = true, bool _hasoptions = false, String _help = "", bool _hostonly = false, bool _enabled = false)
+        public void manualCommandInfo(bool _hastarget = true, bool _hasoptions = false, String _help = "", bool _hostonly = false, bool _enabled = false)
         {
             HasTarget = _hastarget;
             HasOptions = _hasoptions;
@@ -81,9 +81,11 @@ namespace CommandHandler
             {
                 commandSyntaxJson = File.ReadAllText(commandsFile);
                 commandList = JsonSerializer.Deserialize<CommandInfoParser>(commandSyntaxJson);
+                Console.WriteLine("NO constructor error occured");
             }
             catch
             {
+                Console.WriteLine("constructor error occured");
                 commandList = new CommandInfoParser();
                 commandList.Commands = new Dictionary<string, CommandInfo>();
                 jsonServerError = true;
@@ -92,16 +94,21 @@ namespace CommandHandler
 
         private bool reloadCommands()
         {
+            jsonServerError = false;
             try
             {
+                Console.WriteLine("reload1");
                 commandSyntaxJson = File.ReadAllText(commandsFile);
+                Console.WriteLine("reload2");
+                Console.WriteLine(commandSyntaxJson);
                 commandList = JsonSerializer.Deserialize<CommandInfoParser>(commandSyntaxJson);
+                Console.WriteLine("reload3");
             }
             catch
             {
+                Console.WriteLine("reload4");
                 jsonServerError = true;
             }
-            jsonServerError = false;
             return jsonServerError;
         }
 
@@ -193,11 +200,11 @@ namespace CommandHandler
             String helpPattern;
             if (newCommand.HasOptions)
             {
-                helpPattern = @"(/\w+)\s+(<(?:\w+\s*)+>)\s+('<.+?>')";
+                helpPattern = @"(/\w+)\s+(<(?:[\w.]+\s*)+>)\s+('<.+?>')";
             }
             else
             {
-                helpPattern = @"(/\w+)\s+(<(?:\w+\s*)+>)$";
+                helpPattern = @"(/\w+)\s+(<(?:[\w.]+\s*)+>)$";
             }
 
             match = Regex.Match(newCommand.Help, helpPattern);
@@ -220,12 +227,14 @@ namespace CommandHandler
             }
             catch
             {
+                Console.WriteLine("server error 1");
                 commandList.Commands.Remove(newCommandName);
                 return RegisterResult.ServerError;
             }
 
-            if (!reloadCommands())
+            if (reloadCommands())
             {
+                Console.WriteLine("server error 2");
                 return RegisterResult.ServerError;
             }
 

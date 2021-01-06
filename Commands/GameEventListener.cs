@@ -29,9 +29,12 @@ namespace Impostor.Plugins.Commands.Handlers
         public GameEventListener(ILogger<Commands> logger)
         {
             _logger = logger;
-            var whisperCommand = new CommandInfo(true, true, "/whisper <target> '<Message>'", false, true);
-            var killCommand = new CommandInfo(true, false, "/kill <target>", true, true);
-            var setNameCommand = new CommandInfo(true, false, "/setname <name>", false, true);
+            var whisperCommand = new CommandInfo();
+            whisperCommand.manualCommandInfo(true, true, "/whisper <target> '<Message>'", false, true);
+            var killCommand = new CommandInfo();
+            killCommand.manualCommandInfo(true, false, "/kill <target>", true, true);
+            var setNameCommand = new CommandInfo();
+            setNameCommand.manualCommandInfo(true, false, "/setname <name>", false, true);
             pluginCommands["/whisper"] = whisperCommand;
             pluginCommands["/kill"] = killCommand;
             pluginCommands["/setname"] = setNameCommand;
