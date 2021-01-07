@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Impostor.Api.Events;
 using Impostor.Api.Events.Player;
 using Impostor.Api.Games;
+using Impostor.Api.Net.Inner.Objects;
 using Microsoft.Extensions.Logging;
 using CommandHandler;
 
@@ -30,26 +31,20 @@ namespace Impostor.Plugins.Commands.Handlers
         public GameEventListener(ILogger<Commands> logger)
         {
             _logger = logger;
+        }
 
-            /*var saveCommand = new save(true, false, "/save <filename>", true, true);
+        private async ValueTask ServerMessage(IInnerPlayerControl sender, String message)
+        {
+            var currentColor = sender.PlayerInfo.ColorId;
+            var currentName = sender.PlayerInfo.PlayerName;
 
-            var loadCommand = new load(true, false, "/load <filename>", true, true);
+            await sender.SetColorAsync(Impostor.Api.Innersloth.Customization.ColorType.White);
+            await sender.SetNameAsync("Server");
 
-            pluginCommands["/whisper"] = whisperCommand;
-            pluginCommands["/kill"] = killCommand;
-            pluginCommands["/setname"] = setNameCommand;
-            pluginCommands["/save"] = saveCommand;
-            pluginCommands["/load"] = loadCommand;
-            foreach(var entry in pluginCommands)
-            {
-                parser.RegisterCommand(entry.Key, entry.Value);
-            }*/
+            await sender.SendChatToPlayerAsync(message, sender);
 
-            //manager.managers["/whisper"] = handleWhisper;
-            //manager.managers["/kill"] = handleKill;
-            //manager.managers["/setname"] = handleSetName;
-            //manager.managers["/save"] = handleSave;
-            //manager.managers["/load"] = handleLoad;
+            await sender.SetColorAsync(currentColor);
+            await sender.SetNameAsync(currentName);
         }
 
         [EventListener]
@@ -62,24 +57,21 @@ namespace Impostor.Plugins.Commands.Handlers
                 _game = e.Game;
             }
             
-            /*if (e.Message.StartsWith("/"))
+            if (e.Message.StartsWith("/"))
             {
                 ValidatedCommand parsedCommand = parser.ParseCommand(e.Message, e.ClientPlayer);
 
-                else if (parsedCommand.Validation == ValidateResult.Valid)
+                String response = "";
+                if (parsedCommand.Validation == ValidateResult.Valid)
                 {
-                    if (!manager.managers.ContainsKey(parsedCommand.CommandName))
-                    {
-                        serverResponse = "Invalid command or syntax";
-                    }
-                    else
-                    {
-                        serverResponse = await manager.managers[parsedCommand.CommandName](e.PlayerControl, parsedCommand);
-                    }
+                    response = await manager.CallManager(parsedCommand, e.ClientPlayer.Character, parsedCommand, e);
                 }
-                serverResponse = "[ff0000ff]" + serverResponse + "[]";
-                await ServerMessage(e.ClientPlayer.Character, e.ClientPlayer.Character, serverResponse);
+                else
+                {
+                    parser.GetCommandHelp(parsedCommand.CommandName);
+                }
+                await ServerMessage(e.ClientPlayer.Character, response);
             }
-        }*/
+        }
     }
 }

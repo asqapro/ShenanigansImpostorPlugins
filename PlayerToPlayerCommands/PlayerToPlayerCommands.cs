@@ -1,16 +1,16 @@
 ﻿using System;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
-using CommandHandler;
 using Impostor.Api.Net.Inner.Objects;
 using Impostor.Api.Events.Player;
 using Impostor.Api.Innersloth;
+using CommandHandler;
 
 namespace PlayerToPlayerCommands
 {
     public class whisper : Command
     {
-        public whisper(bool _hastarget, bool _hasoptions, String _help, bool _hostonly, bool _enabled) : base(_hastarget, _hasoptions, _help, _hostonly, _enabled)
+        public whisper(String _name, bool _hastarget, bool _hasoptions, String _help, bool _hostonly, bool _enabled) : base(_name, _hastarget, _hasoptions, _help, _hostonly, _enabled)
         {
         }
 
@@ -40,7 +40,7 @@ namespace PlayerToPlayerCommands
 
     public class kill : Command
     {
-        public kill(bool _hastarget, bool _hasoptions, String _help, bool _hostonly, bool _enabled) : base(_hastarget, _hasoptions, _help, _hostonly, _enabled)
+        public kill(String _name, bool _hastarget, bool _hasoptions, String _help, bool _hostonly, bool _enabled) : base(_name, _hastarget, _hasoptions, _help, _hostonly, _enabled)
         {
         }
 
@@ -50,7 +50,7 @@ namespace PlayerToPlayerCommands
             {
                 if (player.Character.PlayerInfo.PlayerName == parsedCommand.Target)
                 {
-                    await player.Character.SetExiledAsync(player);
+                    await player.Character.SetExiledAsync();
                     return $"Successfully killed {parsedCommand.Target}";
                 }
             }
@@ -60,7 +60,7 @@ namespace PlayerToPlayerCommands
 
     public class setname : Command
     {
-        public setname(bool _hastarget, bool _hasoptions, String _help, bool _hostonly, bool _enabled) : base(_hastarget, _hasoptions, _help, _hostonly, _enabled)
+        public setname(String _name, bool _hastarget, bool _hasoptions, String _help, bool _hostonly, bool _enabled) : base(_name, _hastarget, _hasoptions, _help, _hostonly, _enabled)
         {
         }
 
@@ -98,9 +98,11 @@ namespace PlayerToPlayerCommands
         private CommandManager manager = CommandManager.Instance;
         public handler()
         {
-            var whisperCommand = new whisper(true, true, "/whisper <target> '<Message>'", false, true);
-            var killCommand = new kill(true, false, "/kill <target>", true, true);
-            var setNameCommand = new setname(true, false, "/setname <name>", false, true);
-            manager.
+            var whisperCommand = new whisper("/whisper", true, true, "/whisper <target> '<Message>'", false, true);
+            var killCommand = new kill("/kill", true, false, "/kill <target>", true, true);
+            var setNameCommand = new setname("/setName", true, false, "/setname <name>", false, true);
+            manager.RegisterManager(whisperCommand);
+            manager.RegisterManager(killCommand);
+        }
     }
 }

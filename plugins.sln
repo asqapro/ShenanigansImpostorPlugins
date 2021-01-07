@@ -11,7 +11,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Clones", "Clones\Clones.csp
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PluginLoader", "PluginLoader\PluginLoader.csproj", "{78D34FC5-99EB-4AF3-8901-5538319F4E55}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Commands", "Commands\Commands.csproj", "{A306CF70-1CCC-4DB9-BE4C-290222733DAE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlayerToPlayerCommands", "PlayerToPlayerCommands\PlayerToPlayerCommands.csproj", "{A306CF70-1CCC-4DB9-BE4C-290222733DAE}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpecialRoles", "SpecialRoles\SpecialRoles.csproj", "{54AF01BA-F822-4697-8D5E-37C952B619F1}"
 EndProject

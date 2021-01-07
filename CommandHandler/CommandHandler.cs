@@ -21,15 +21,6 @@ namespace CommandHandler
         Valid
     }
 
-    public enum RegisterResult
-    {
-        ServerError,
-        AlreadyExists,
-        SyntaxError,
-        HelpError,
-        Success
-    }
-
     public class CommandInfoParser
     {
         public Dictionary<String, CommandSchema> Commands {get; set;}
@@ -46,8 +37,10 @@ namespace CommandHandler
 
     public abstract class Command : CommandSchema
     {
-        public Command(bool _hastarget = true, bool _hasoptions = false, String _help = "", bool _hostonly = false, bool _enabled = false)
+        public String Name {get; set;}
+        public Command(String _name, bool _hastarget = true, bool _hasoptions = false, String _help = "", bool _hostonly = false, bool _enabled = false)
         {
+            Name = _name;
             HasTarget = _hastarget;
             HasOptions = _hasoptions;
             Help = _help;
@@ -182,63 +175,6 @@ namespace CommandHandler
             return parsed;
         }
 
-        public RegisterResult RegisterCommand(String newCommandName, CommandSchema newCommand)
-        {
-            if (commandList.Commands.ContainsKey(newCommandName))
-            {
-                return RegisterResult.AlreadyExists;
-            }
-
-            String commandPattern = @"(/\w+)";
-            var match = Regex.Match(newCommandName, commandPattern);
-
-            if (!match.Groups[1].Success)
-            {
-                return RegisterResult.SyntaxError;
-            }
-
-            String helpPattern;
-            if (newCommand.HasOptions)
-            {
-                helpPattern = @"(/\w+)\s+(<(?:[\w.]+\s*)+>)\s+('<.+?>')";
-            }
-            else
-            {
-                helpPattern = @"(/\w+)\s+(<(?:[\w.]+\s*)+>)$";
-            }
-
-            match = Regex.Match(newCommand.Help, helpPattern);
-            if (!match.Success)
-            {
-                return RegisterResult.HelpError;
-            }
-
-            commandList.Commands[newCommandName] = newCommand;
-
-            try
-            {
-                var options = new JsonSerializerOptions
-                {
-                    WriteIndented = true,
-                    Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-                };
-                var registerJson = JsonSerializer.Serialize<CommandInfoParser>(commandList, options);
-                File.WriteAllText(commandsFile, registerJson);
-            }
-            catch
-            {
-                commandList.Commands.Remove(newCommandName);
-                return RegisterResult.ServerError;
-            }
-
-            if (reloadCommands())
-            {
-                return RegisterResult.ServerError;
-            }
-
-            return RegisterResult.Success;
-        }
-
         public String GetCommandHelp(String commandName)
         {
             if (jsonServerError)
@@ -260,48 +196,25 @@ namespace CommandHandler
                 (() => new CommandManager());
         public static CommandManager Instance { get { return lazy.Value; } }
 
-        private async ValueTask ServerMessage(IInnerPlayerControl sender, IInnerPlayerControl receiver, String message)
+        private Dictionary<String, Command> managers = new Dictionary<string, Command>();
+
+        public bool RegisterManager(Command newCommand)
         {
-            var currentColor = sender.PlayerInfo.ColorId;
-            var currentName = sender.PlayerInfo.PlayerName;
-
-            await sender.SetColorAsync(Impostor.Api.Innersloth.Customization.ColorType.White);
-            await sender.SetNameAsync("Server");
-
-            await sender.SendChatToPlayerAsync(message, receiver);
-
-            await sender.SetColorAsync(currentColor);
-            await sender.SetNameAsync(currentName);
+            if (managers.ContainsKey(newCommand.Name))
+            {
+                return false;
+            }
+            managers[newCommand.Name] = newCommand;
+            return true;
         }
 
-        public Dictionary<String, Func<IInnerPlayerControl, ValidatedCommand, ValueTask<String>>> managers = new Dictionary<string, Func<IInnerPlayerControl, ValidatedCommand, ValueTask<string>>>();
-
-        public void executeCommand()
+        public async ValueTask<String> CallManager(ValidatedCommand toCall, IInnerPlayerControl sender, ValidatedCommand parsedCommand, IPlayerChatEvent chatEvent)
         {
-            String serverResponse = "Command executed successfully";
-
-            
-
-            if (parsedCommand.Validation == ValidateResult.ServerError)
+            if (managers.ContainsKey(toCall.CommandName))
             {
-                serverResponse = "Server experienced an error. Inform the host: \n<" + e.Game.Host.Character.PlayerInfo.PlayerName + ">";
+                return await managers[toCall.CommandName].handle(sender, parsedCommand, chatEvent);
             }
-            else if (parsedCommand.Validation == ValidateResult.DoesNotExist)
-            {
-                serverResponse = "Command does not exist";
-            }
-            else if (parsedCommand.Validation == ValidateResult.HostOnly)
-            {
-                serverResponse = "Only the host may use that command";
-            }
-            else if (parsedCommand.Validation == ValidateResult.MissingTarget)
-            {
-                serverResponse = "Missing command target. Proper syntax is: \n" + parsedCommand.Help;
-            }
-            else if (parsedCommand.Validation == ValidateResult.MissingOptions)
-            {
-                serverResponse = "Missing command options. Proper syntax is: \n" + parsedCommand.Help;
-            }
+            return "Command does not have a handler registered";
         }
     }
 }

@@ -10,7 +10,7 @@ namespace Impostor.Plugins.GameOptionsSaverLoader
 {
     public class save : Command
     {
-        public save(bool _hastarget, bool _hasoptions, String _help, bool _hostonly, bool _enabled) : base(_hastarget, _hasoptions, _help, _hostonly, _enabled)
+        public save(String _name, bool _hastarget, bool _hasoptions, String _help, bool _hostonly, bool _enabled) : base(_name, _hastarget, _hasoptions, _help, _hostonly, _enabled)
         {
         }
 
@@ -38,7 +38,7 @@ namespace Impostor.Plugins.GameOptionsSaverLoader
 
     public class load : Command
     {
-        public load(bool _hastarget, bool _hasoptions, String _help, bool _hostonly, bool _enabled) : base(_hastarget, _hasoptions, _help, _hostonly, _enabled)
+        public load(String _name, bool _hastarget, bool _hasoptions, String _help, bool _hostonly, bool _enabled) : base(_name, _hastarget, _hasoptions, _help, _hostonly, _enabled)
         {
         }
 
@@ -62,6 +62,18 @@ namespace Impostor.Plugins.GameOptionsSaverLoader
             {
                 return $"Failed to load game config: {parsedCommand.Target}.bin";
             }
+        }
+    }
+
+    public class handler
+    {
+        private CommandManager manager = CommandManager.Instance;
+        public handler()
+        {
+            var saveommand = new save("/save", true, true, "/save <filename>", true, true);
+            var loadCommand = new load("/load", true, false, "/load <filename>", true, true);
+            manager.RegisterManager(saveommand);
+            manager.RegisterManager(loadCommand);
         }
     }
 }
