@@ -70,7 +70,7 @@ namespace GameOptionsSaverLoader
         private CommandManager manager = CommandManager.Instance;
         public GameOptionsSaverLoaderHandler()
         {
-            var saveommand = new save("/save", true, true, "/save <filename>", true, true);
+            var saveommand = new save("/save", true, false, "/save <filename>", true, true);
             var loadCommand = new load("/load", true, false, "/load <filename>", true, true);
             manager.RegisterManager(saveommand);
             manager.RegisterManager(loadCommand);

@@ -11,11 +11,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Clones", "Clones\Clones.csp
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PluginLoader", "PluginLoader\PluginLoader.csproj", "{78D34FC5-99EB-4AF3-8901-5538319F4E55}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlayerToPlayerCommands", "PlayerToPlayerCommands\PlayerToPlayerCommands.csproj", "{A306CF70-1CCC-4DB9-BE4C-290222733DAE}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpecialRoles", "SpecialRoles\SpecialRoles.csproj", "{54AF01BA-F822-4697-8D5E-37C952B619F1}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameOptionsSaverLoader", "GameOptionsSaverLoader\GameOptionsSaverLoader.csproj", "{7777F3CD-8C23-452C-A28B-DCE090EDD577}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommandHandler", "CommandHandler\CommandHandler.csproj", "{A7A19C98-FD05-4E1F-9EC7-F8BD84B92057}"
 EndProject
@@ -41,18 +37,10 @@ Global
 		{78D34FC5-99EB-4AF3-8901-5538319F4E55}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{78D34FC5-99EB-4AF3-8901-5538319F4E55}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{78D34FC5-99EB-4AF3-8901-5538319F4E55}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A306CF70-1CCC-4DB9-BE4C-290222733DAE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A306CF70-1CCC-4DB9-BE4C-290222733DAE}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A306CF70-1CCC-4DB9-BE4C-290222733DAE}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A306CF70-1CCC-4DB9-BE4C-290222733DAE}.Release|Any CPU.Build.0 = Release|Any CPU
 		{54AF01BA-F822-4697-8D5E-37C952B619F1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{54AF01BA-F822-4697-8D5E-37C952B619F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{54AF01BA-F822-4697-8D5E-37C952B619F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{54AF01BA-F822-4697-8D5E-37C952B619F1}.Release|Any CPU.Build.0 = Release|Any CPU
-		{7777F3CD-8C23-452C-A28B-DCE090EDD577}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7777F3CD-8C23-452C-A28B-DCE090EDD577}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7777F3CD-8C23-452C-A28B-DCE090EDD577}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7777F3CD-8C23-452C-A28B-DCE090EDD577}.Release|Any CPU.Build.0 = Release|Any CPU
 		{A7A19C98-FD05-4E1F-9EC7-F8BD84B92057}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{A7A19C98-FD05-4E1F-9EC7-F8BD84B92057}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A7A19C98-FD05-4E1F-9EC7-F8BD84B92057}.Release|Any CPU.ActiveCfg = Release|Any CPU

@@ -75,9 +75,13 @@ namespace Impostor.Plugins.Commands.Handlers
                 {
                     response = "Command does not exist";
                 }
+                else if (parsedCommand.Validation == ValidateResult.MissingTarget)
+                {
+                    response = $"Command was missing target. \nRefer to help: {parsedCommand.Help}";
+                }
                 else if (parsedCommand.Validation == ValidateResult.MissingOptions)
                 {
-                    response = $"Command was improperly formatted. Refer to help: {parsedCommand.Help}";
+                    response = $"Command was missing options. \nRefer to help: {parsedCommand.Help}";
                 }
                 response = $"[ff0000ff]{response}[]";
                 await ServerMessage(e.ClientPlayer.Character, response);
