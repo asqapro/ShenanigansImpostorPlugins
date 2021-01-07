@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Impostor.Api.Net;
 using Impostor.Api.Net.Inner.Objects;
+using Impostor.Api.Events.Player;
 
 namespace CommandHandler
 {
@@ -31,17 +32,21 @@ namespace CommandHandler
 
     public class CommandInfoParser
     {
-        public Dictionary<String, CommandInfo> Commands {get; set;}
+        public Dictionary<String, CommandSchema> Commands {get; set;}
     }
 
-    public class CommandInfo
+    public class CommandSchema
     {
         public bool HasTarget {get; set;}
         public bool HasOptions {get; set;}
         public String Help {get; set;}
         public bool HostOnly {get; set;}
         public bool Enabled {get; set;}
-        public void manualCommandInfo(bool _hastarget = true, bool _hasoptions = false, String _help = "", bool _hostonly = false, bool _enabled = false)
+    }
+
+    public abstract class Command : CommandSchema
+    {
+        public Command(bool _hastarget = true, bool _hasoptions = false, String _help = "", bool _hostonly = false, bool _enabled = false)
         {
             HasTarget = _hastarget;
             HasOptions = _hasoptions;
@@ -49,9 +54,11 @@ namespace CommandHandler
             HostOnly = _hostonly;
             Enabled = _enabled;
         }
+
+        public abstract ValueTask<String> handle(IInnerPlayerControl sender, ValidatedCommand parsedCommand, IPlayerChatEvent chatEvent);
     }
 
-    public class Command
+    public class ValidatedCommand
     {
         public String CommandName {get; set;}
         public String Target {get; set;}
@@ -85,7 +92,7 @@ namespace CommandHandler
             catch
             {
                 commandList = new CommandInfoParser();
-                commandList.Commands = new Dictionary<string, CommandInfo>();
+                commandList.Commands = new Dictionary<string, CommandSchema>();
                 jsonServerError = true;
             }
         }
@@ -96,7 +103,6 @@ namespace CommandHandler
             try
             {
                 commandSyntaxJson = File.ReadAllText(commandsFile);
-                Console.WriteLine(commandSyntaxJson);
                 commandList = JsonSerializer.Deserialize<CommandInfoParser>(commandSyntaxJson);
             }
             catch
@@ -143,9 +149,9 @@ namespace CommandHandler
             }
         }
 
-        public Command ParseCommand(String toParse, IClientPlayer sender)
+        public ValidatedCommand ParseCommand(String toParse, IClientPlayer sender)
         {
-            var parsed = new Command();
+            var parsed = new ValidatedCommand();
 
             if (jsonServerError)
             {
@@ -176,7 +182,7 @@ namespace CommandHandler
             return parsed;
         }
 
-        public RegisterResult RegisterCommand(String newCommandName, CommandInfo newCommand)
+        public RegisterResult RegisterCommand(String newCommandName, CommandSchema newCommand)
         {
             if (commandList.Commands.ContainsKey(newCommandName))
             {
@@ -221,14 +227,12 @@ namespace CommandHandler
             }
             catch
             {
-                Console.WriteLine("server error 1");
                 commandList.Commands.Remove(newCommandName);
                 return RegisterResult.ServerError;
             }
 
             if (reloadCommands())
             {
-                Console.WriteLine("server error 2");
                 return RegisterResult.ServerError;
             }
 
@@ -256,6 +260,48 @@ namespace CommandHandler
                 (() => new CommandManager());
         public static CommandManager Instance { get { return lazy.Value; } }
 
-        public Dictionary<String, Func<IInnerPlayerControl, Command, ValueTask<String>>> managers = new Dictionary<string, Func<IInnerPlayerControl, Command, ValueTask<string>>>();
+        private async ValueTask ServerMessage(IInnerPlayerControl sender, IInnerPlayerControl receiver, String message)
+        {
+            var currentColor = sender.PlayerInfo.ColorId;
+            var currentName = sender.PlayerInfo.PlayerName;
+
+            await sender.SetColorAsync(Impostor.Api.Innersloth.Customization.ColorType.White);
+            await sender.SetNameAsync("Server");
+
+            await sender.SendChatToPlayerAsync(message, receiver);
+
+            await sender.SetColorAsync(currentColor);
+            await sender.SetNameAsync(currentName);
+        }
+
+        public Dictionary<String, Func<IInnerPlayerControl, ValidatedCommand, ValueTask<String>>> managers = new Dictionary<string, Func<IInnerPlayerControl, ValidatedCommand, ValueTask<string>>>();
+
+        public void executeCommand()
+        {
+            String serverResponse = "Command executed successfully";
+
+            
+
+            if (parsedCommand.Validation == ValidateResult.ServerError)
+            {
+                serverResponse = "Server experienced an error. Inform the host: \n<" + e.Game.Host.Character.PlayerInfo.PlayerName + ">";
+            }
+            else if (parsedCommand.Validation == ValidateResult.DoesNotExist)
+            {
+                serverResponse = "Command does not exist";
+            }
+            else if (parsedCommand.Validation == ValidateResult.HostOnly)
+            {
+                serverResponse = "Only the host may use that command";
+            }
+            else if (parsedCommand.Validation == ValidateResult.MissingTarget)
+            {
+                serverResponse = "Missing command target. Proper syntax is: \n" + parsedCommand.Help;
+            }
+            else if (parsedCommand.Validation == ValidateResult.MissingOptions)
+            {
+                serverResponse = "Missing command options. Proper syntax is: \n" + parsedCommand.Help;
+            }
+        }
     }
 }
