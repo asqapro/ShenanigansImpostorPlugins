@@ -7,6 +7,8 @@ using Impostor.Api.Games;
 using Impostor.Api.Net.Inner.Objects;
 using Microsoft.Extensions.Logging;
 using CommandHandler;
+using PlayerToPlayerCommands;
+using GameOptionsSaverLoader;
 
 //todo:
 // - figure out how to inject _game into whisper and others
@@ -23,14 +25,14 @@ namespace Impostor.Plugins.Commands.Handlers
     public class GameEventListener : IEventListener
     {
         private readonly ILogger<Commands> _logger;
-        private IGame _game;
-        CommandParser parser = CommandParser.Instance;
         private Dictionary<String, Command> pluginCommands = new Dictionary<string, Command>(); 
         private CommandManager manager = CommandManager.Instance;
 
         public GameEventListener(ILogger<Commands> logger)
         {
-            _logger = logger;
+            _logger = logger; 
+            var PtPCommandHandler = new PlayerToPlayerCommandsHandler();
+            var SaverLoaderHandler = new GameOptionsSaverLoaderHandler(); 
         }
 
         private async ValueTask ServerMessage(IInnerPlayerControl sender, String message)
@@ -52,24 +54,32 @@ namespace Impostor.Plugins.Commands.Handlers
         {
             _logger.LogInformation($"{e.PlayerControl.PlayerInfo.PlayerName} said {e.Message}");
 
-            if (_game == null)
-            {
-                _game = e.Game;
-            }
-            
             if (e.Message.StartsWith("/"))
             {
-                ValidatedCommand parsedCommand = parser.ParseCommand(e.Message, e.ClientPlayer);
+                ValidatedCommand parsedCommand = manager.ParseCommand(e.Message, e.ClientPlayer);
 
                 String response = "";
                 if (parsedCommand.Validation == ValidateResult.Valid)
                 {
                     response = await manager.CallManager(parsedCommand, e.ClientPlayer.Character, parsedCommand, e);
                 }
-                else
+                else if (parsedCommand.Validation == ValidateResult.HostOnly)
                 {
-                    parser.GetCommandHelp(parsedCommand.CommandName);
+                    response = "Only the host may call that command";
                 }
+                else if (parsedCommand.Validation == ValidateResult.Disabled)
+                {
+                    response = "Command is disabled";
+                }
+                else if (parsedCommand.Validation == ValidateResult.DoesNotExist)
+                {
+                    response = "Command does not exist";
+                }
+                else if (parsedCommand.Validation == ValidateResult.MissingOptions)
+                {
+                    response = $"Command was improperly formatted. Refer to help: {parsedCommand.Help}";
+                }
+                response = $"[ff0000ff]{response}[]";
                 await ServerMessage(e.ClientPlayer.Character, response);
             }
         }

@@ -2,7 +2,6 @@
 using System.IO;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Impostor.Api.Net;
 using Impostor.Api.Net.Inner.Objects;
@@ -12,7 +11,6 @@ namespace CommandHandler
 {
     public enum ValidateResult
     {
-        ServerError,
         DoesNotExist,
         Disabled,
         MissingTarget,
@@ -60,49 +58,18 @@ namespace CommandHandler
         public ValidateResult Validation {get; set;}
     }
 
-    public sealed class CommandParser
+    public sealed class CommandManager
     {
-        private String commandSyntaxJson;
-        private CommandInfoParser commandList;
-        private String commandsFile = "CommandsSyntax.json";
+        private Dictionary<String, Command> managers = new Dictionary<string, Command>();
 
-        private bool jsonServerError;
+        private static readonly Lazy<CommandManager> lazy =
+            new Lazy<CommandManager>
+                (() => new CommandManager());
 
-        private static readonly Lazy<CommandParser> lazy =
-            new Lazy<CommandParser>
-                (() => new CommandParser());
+        public static CommandManager Instance { get { return lazy.Value; } }
 
-        public static CommandParser Instance { get { return lazy.Value; } }
-
-        private CommandParser()
+        private CommandManager()
         {
-            jsonServerError = false;
-            try
-            {
-                commandSyntaxJson = File.ReadAllText(commandsFile);
-                commandList = JsonSerializer.Deserialize<CommandInfoParser>(commandSyntaxJson);
-            }
-            catch
-            {
-                commandList = new CommandInfoParser();
-                commandList.Commands = new Dictionary<string, CommandSchema>();
-                jsonServerError = true;
-            }
-        }
-
-        private bool reloadCommands()
-        {
-            jsonServerError = false;
-            try
-            {
-                commandSyntaxJson = File.ReadAllText(commandsFile);
-                commandList = JsonSerializer.Deserialize<CommandInfoParser>(commandSyntaxJson);
-            }
-            catch
-            {
-                jsonServerError = true;
-            }
-            return jsonServerError;
         }
 
         private ValidateResult ValidateCommand(String toValidate, IClientPlayer sender)
@@ -116,23 +83,23 @@ namespace CommandHandler
                 commandName = toValidate.Split(" ")[0].Trim();
             }
 
-            if (!commandList.Commands.ContainsKey(commandName))
+            if (!managers.ContainsKey(commandName))
             {
                 return ValidateResult.DoesNotExist;
             }
-            else if (!match.Groups[2].Success && commandList.Commands[commandName].HasTarget)
+            else if (!match.Groups[2].Success && managers[commandName].HasTarget)
             {
                 return ValidateResult.MissingTarget;
             }
-            else if (!match.Groups[3].Success && commandList.Commands[commandName].HasOptions)
+            else if (!match.Groups[3].Success && managers[commandName].HasOptions)
             {
                 return ValidateResult.MissingOptions;
             }
-            else if (!commandList.Commands[commandName].Enabled)
+            else if (!managers[commandName].Enabled)
             {
                 return ValidateResult.Disabled;
             }
-            else if (commandList.Commands[commandName].HostOnly && !sender.IsHost)
+            else if (managers[commandName].HostOnly && !sender.IsHost)
             {
                 return ValidateResult.HostOnly;
             }
@@ -145,12 +112,6 @@ namespace CommandHandler
         public ValidatedCommand ParseCommand(String toParse, IClientPlayer sender)
         {
             var parsed = new ValidatedCommand();
-
-            if (jsonServerError)
-            {
-                parsed.Validation = ValidateResult.ServerError;
-                return parsed;
-            }
             
             parsed.Validation = ValidateCommand(toParse, sender);
             if (parsed.Validation == ValidateResult.DoesNotExist)
@@ -170,33 +131,19 @@ namespace CommandHandler
             parsed.CommandName = commandName;
             parsed.Target = match.Groups[2].Value.Trim();
             parsed.Options = match.Groups[3].Value.Trim();
-            parsed.Help = commandList.Commands[commandName].Help;
+            parsed.Help = managers[commandName].Help;
 
             return parsed;
         }
 
         public String GetCommandHelp(String commandName)
         {
-            if (jsonServerError)
-            {
-                return "Server experienced error";
-            }
-            if (!commandList.Commands.ContainsKey(commandName))
+            if (!managers.ContainsKey(commandName))
             {
                 return "Command does not exist";
             }
-            return commandList.Commands[commandName].Help;
+            return managers[commandName].Help;
         }
-    }
-
-    public sealed class CommandManager
-    {
-        private static readonly Lazy<CommandManager> lazy =
-            new Lazy<CommandManager>
-                (() => new CommandManager());
-        public static CommandManager Instance { get { return lazy.Value; } }
-
-        private Dictionary<String, Command> managers = new Dictionary<string, Command>();
 
         public bool RegisterManager(Command newCommand)
         {
@@ -210,11 +157,12 @@ namespace CommandHandler
 
         public async ValueTask<String> CallManager(ValidatedCommand toCall, IInnerPlayerControl sender, ValidatedCommand parsedCommand, IPlayerChatEvent chatEvent)
         {
+            String response = "Command does not have a handler registered";
             if (managers.ContainsKey(toCall.CommandName))
             {
-                return await managers[toCall.CommandName].handle(sender, parsedCommand, chatEvent);
+                response = await managers[toCall.CommandName].handle(sender, parsedCommand, chatEvent);
             }
-            return "Command does not have a handler registered";
+            return response;
         }
     }
 }

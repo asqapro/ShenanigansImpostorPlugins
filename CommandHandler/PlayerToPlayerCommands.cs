@@ -93,10 +93,10 @@ namespace PlayerToPlayerCommands
         }
     }
 
-    public class handler
+    public class PlayerToPlayerCommandsHandler
     {
         private CommandManager manager = CommandManager.Instance;
-        public handler()
+        public PlayerToPlayerCommandsHandler()
         {
             var whisperCommand = new whisper("/whisper", true, true, "/whisper <target> '<Message>'", false, true);
             var killCommand = new kill("/kill", true, false, "/kill <target>", true, true);
