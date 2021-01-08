@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -9,6 +8,7 @@ using Impostor.Api.Events.Player;
 
 namespace CommandHandler
 {
+
     public enum ValidateResult
     {
         DoesNotExist,
@@ -17,36 +17,6 @@ namespace CommandHandler
         MissingOptions,
         HostOnly,
         Valid
-    }
-
-    public class CommandInfoParser
-    {
-        public Dictionary<String, CommandSchema> Commands {get; set;}
-    }
-
-    public class CommandSchema
-    {
-        public bool HasTarget {get; set;}
-        public bool HasOptions {get; set;}
-        public String Help {get; set;}
-        public bool HostOnly {get; set;}
-        public bool Enabled {get; set;}
-    }
-
-    public abstract class Command : CommandSchema
-    {
-        public String Name {get; set;}
-        public Command(String _name, bool _hastarget = true, bool _hasoptions = false, String _help = "", bool _hostonly = false, bool _enabled = false)
-        {
-            Name = _name;
-            HasTarget = _hastarget;
-            HasOptions = _hasoptions;
-            Help = _help;
-            HostOnly = _hostonly;
-            Enabled = _enabled;
-        }
-
-        public abstract ValueTask<String> handle(IInnerPlayerControl sender, ValidatedCommand parsedCommand, IPlayerChatEvent chatEvent);
     }
 
     public class ValidatedCommand
@@ -58,17 +28,44 @@ namespace CommandHandler
         public ValidateResult Validation {get; set;}
     }
 
-    public sealed class CommandManager
+    public abstract class Command
+    {
+        public bool HasTarget {get; set;}
+        public bool HasOptions {get; set;}
+        public String Help {get; set;}
+        public bool HostOnly {get; set;}
+        public bool Enabled {get; set;}
+        public String Name {get; set;}
+
+        public Command()
+        {
+            HasTarget = false;
+            HasOptions = false;
+            Help = "Unimplemented command";
+            HostOnly = true;
+            Enabled = false;
+            Name = "Unimplemented";
+        }
+
+        public abstract void register();
+
+        public abstract ValueTask<String> handle(IInnerPlayerControl sender, ValidatedCommand parsedCommand, IPlayerChatEvent chatEvent);
+    }
+
+    public interface ICommandManager
+    {
+        ValidatedCommand ParseCommand(String toParse, IClientPlayer sender);
+        String GetCommandHelp(String commandName);
+        bool RegisterCommand(Command newCommand);
+        ValueTask<String> CallCommand(ValidatedCommand toCall, IInnerPlayerControl sender, ValidatedCommand parsedCommand, IPlayerChatEvent chatEvent);
+
+    }
+
+    public class CommandManager : ICommandManager
     {
         private Dictionary<String, Command> managers = new Dictionary<string, Command>();
 
-        private static readonly Lazy<CommandManager> lazy =
-            new Lazy<CommandManager>
-                (() => new CommandManager());
-
-        public static CommandManager Instance { get { return lazy.Value; } }
-
-        private CommandManager()
+        public CommandManager()
         {
         }
 
@@ -145,17 +142,18 @@ namespace CommandHandler
             return managers[commandName].Help;
         }
 
-        public bool RegisterManager(Command newCommand)
+        public bool RegisterCommand(Command newCommand)
         {
             if (managers.ContainsKey(newCommand.Name))
             {
                 return false;
             }
+            newCommand.register();
             managers[newCommand.Name] = newCommand;
             return true;
         }
 
-        public async ValueTask<String> CallManager(ValidatedCommand toCall, IInnerPlayerControl sender, ValidatedCommand parsedCommand, IPlayerChatEvent chatEvent)
+        public async ValueTask<String> CallCommand(ValidatedCommand toCall, IInnerPlayerControl sender, ValidatedCommand parsedCommand, IPlayerChatEvent chatEvent)
         {
             String response = "Command does not have a handler registered";
             if (managers.ContainsKey(toCall.CommandName))

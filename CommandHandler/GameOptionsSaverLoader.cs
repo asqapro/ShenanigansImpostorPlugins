@@ -10,8 +10,18 @@ namespace GameOptionsSaverLoader
 {
     public class save : Command
     {
-        public save(String _name, bool _hastarget, bool _hasoptions, String _help, bool _hostonly, bool _enabled) : base(_name, _hastarget, _hasoptions, _help, _hostonly, _enabled)
+        public save() : base()
         {
+        }
+
+        public override void register()
+        {
+            HasTarget = true;
+            HasOptions = false;
+            Help = "/save <filename>";
+            HostOnly = true;
+            Enabled = true;
+            Name = "/save";
         }
 
         public override ValueTask<String> handle(IInnerPlayerControl sender, ValidatedCommand parsedCommand, IPlayerChatEvent chatEvent)
@@ -38,8 +48,18 @@ namespace GameOptionsSaverLoader
 
     public class load : Command
     {
-        public load(String _name, bool _hastarget, bool _hasoptions, String _help, bool _hostonly, bool _enabled) : base(_name, _hastarget, _hasoptions, _help, _hostonly, _enabled)
+        public load() : base()
         {
+        }
+
+        public override void register()
+        {
+            HasTarget = true;
+            HasOptions = false;
+            Help = "/load <filename>";
+            HostOnly = true;
+            Enabled = true;
+            Name = "/load";
         }
 
         public override async ValueTask<String> handle(IInnerPlayerControl sender, ValidatedCommand parsedCommand, IPlayerChatEvent chatEvent)
@@ -67,13 +87,13 @@ namespace GameOptionsSaverLoader
 
     public class GameOptionsSaverLoaderHandler
     {
-        private CommandManager manager = CommandManager.Instance;
-        public GameOptionsSaverLoaderHandler()
+        private CommandManager manager;
+        public GameOptionsSaverLoaderHandler(ICommandManager manager)
         {
-            var saveommand = new save("/save", true, false, "/save <filename>", true, true);
-            var loadCommand = new load("/load", true, false, "/load <filename>", true, true);
-            manager.RegisterManager(saveommand);
-            manager.RegisterManager(loadCommand);
+            var saveommand = new save();
+            var loadCommand = new load();
+            manager.RegisterCommand(saveommand);
+            manager.RegisterCommand(loadCommand);
         }
     }
 }

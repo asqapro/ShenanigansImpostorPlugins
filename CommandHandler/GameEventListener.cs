@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Impostor.Api.Events;
 using Impostor.Api.Events.Player;
-using Impostor.Api.Games;
 using Impostor.Api.Net.Inner.Objects;
 using Microsoft.Extensions.Logging;
 using CommandHandler;
@@ -26,13 +25,14 @@ namespace Impostor.Plugins.Commands.Handlers
     {
         private readonly ILogger<Commands> _logger;
         private Dictionary<String, Command> pluginCommands = new Dictionary<string, Command>(); 
-        private CommandManager manager = CommandManager.Instance;
+        private CommandManager manager;
 
         public GameEventListener(ILogger<Commands> logger)
         {
             _logger = logger; 
-            var PtPCommandHandler = new PlayerToPlayerCommandsHandler();
-            var SaverLoaderHandler = new GameOptionsSaverLoaderHandler(); 
+            manager = new CommandManager();
+            var PtPCommandHandler = new PlayerToPlayerCommandsHandler(manager);
+            var SaverLoaderHandler = new GameOptionsSaverLoaderHandler(manager); 
         }
 
         private async ValueTask ServerMessage(IInnerPlayerControl sender, String message)
@@ -61,7 +61,7 @@ namespace Impostor.Plugins.Commands.Handlers
                 String response = "";
                 if (parsedCommand.Validation == ValidateResult.Valid)
                 {
-                    response = await manager.CallManager(parsedCommand, e.ClientPlayer.Character, parsedCommand, e);
+                    response = await manager.CallCommand(parsedCommand, e.ClientPlayer.Character, parsedCommand, e);
                 }
                 else if (parsedCommand.Validation == ValidateResult.HostOnly)
                 {
@@ -82,6 +82,10 @@ namespace Impostor.Plugins.Commands.Handlers
                 else if (parsedCommand.Validation == ValidateResult.MissingOptions)
                 {
                     response = $"Command was missing options. \nRefer to help: {parsedCommand.Help}";
+                }
+                else
+                {
+                    response = $"Something very unexpected happened. Tell {e.Game.Host.Character.PlayerInfo.PlayerName}";
                 }
                 response = $"[ff0000ff]{response}[]";
                 await ServerMessage(e.ClientPlayer.Character, response);

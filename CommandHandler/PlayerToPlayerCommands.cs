@@ -10,8 +10,18 @@ namespace PlayerToPlayerCommands
 {
     public class whisper : Command
     {
-        public whisper(String _name, bool _hastarget, bool _hasoptions, String _help, bool _hostonly, bool _enabled) : base(_name, _hastarget, _hasoptions, _help, _hostonly, _enabled)
+        public whisper() : base()
         {
+        }
+
+        public override void register()
+        {
+            HasTarget = true;
+            HasOptions = true;
+            Help = "/whisper <target> '<Message>'";
+            HostOnly = false;
+            Enabled = true;
+            Name = "/whisper";
         }
 
         private async ValueTask sendWhisper(IInnerPlayerControl sender, IInnerPlayerControl receiver, String message)
@@ -40,8 +50,18 @@ namespace PlayerToPlayerCommands
 
     public class kill : Command
     {
-        public kill(String _name, bool _hastarget, bool _hasoptions, String _help, bool _hostonly, bool _enabled) : base(_name, _hastarget, _hasoptions, _help, _hostonly, _enabled)
+        public kill() : base()
         {
+        }
+
+        public override void register()
+        {
+            HasTarget = true;
+            HasOptions = false;
+            Help = "/kill <target>";
+            HostOnly = true;
+            Enabled = true;
+            Name = "/kill";
         }
 
         public override async ValueTask<String> handle(IInnerPlayerControl sender, ValidatedCommand parsedCommand, IPlayerChatEvent chatEvent)
@@ -60,8 +80,18 @@ namespace PlayerToPlayerCommands
 
     public class setname : Command
     {
-        public setname(String _name, bool _hastarget, bool _hasoptions, String _help, bool _hostonly, bool _enabled) : base(_name, _hastarget, _hasoptions, _help, _hostonly, _enabled)
+        public setname() : base()
         {
+        }
+
+        public override void register()
+        {
+            HasTarget = true;
+            HasOptions = false;
+            Help = "/setname <newname>";
+            HostOnly = false;
+            Enabled = true;
+            Name = "/setname";
         }
 
         private Boolean isAlphaNumeric(string strToCheck)
@@ -95,15 +125,15 @@ namespace PlayerToPlayerCommands
 
     public class PlayerToPlayerCommandsHandler
     {
-        private CommandManager manager = CommandManager.Instance;
-        public PlayerToPlayerCommandsHandler()
+        private ICommandManager manager;
+        public PlayerToPlayerCommandsHandler(ICommandManager manager)
         {
-            var whisperCommand = new whisper("/whisper", true, true, "/whisper <target> '<Message>'", false, true);
-            var killCommand = new kill("/kill", true, false, "/kill <target>", true, true);
-            var setnameCommand = new setname("/setname", true, false, "/setname <name>", false, true);
-            manager.RegisterManager(whisperCommand);
-            manager.RegisterManager(killCommand);
-            manager.RegisterManager(setnameCommand);
+            var whisperCommand = new whisper();
+            var killCommand = new kill();
+            var setnameCommand = new setname();
+            manager.RegisterCommand(whisperCommand);
+            manager.RegisterCommand(killCommand);
+            manager.RegisterCommand(setnameCommand);
         }
     }
 }
