@@ -78,6 +78,15 @@ namespace PlayerToPlayerCommands
         }
     }
 
+    public static class StringExt
+    {
+        public static string Truncate(this string value, int maxLength)
+        {
+            if (string.IsNullOrEmpty(value)) return value;
+            return value.Length <= maxLength ? value : value.Substring(0, maxLength); 
+        }
+    }
+
     public class setname : Command
     {
         public setname() : base()
@@ -102,7 +111,7 @@ namespace PlayerToPlayerCommands
 
         public override async ValueTask<String> handle(IInnerPlayerControl sender, ValidatedCommand parsedCommand, IPlayerChatEvent chatEvent)
         {
-            var newName = parsedCommand.Target;
+            var newName = parsedCommand.Target.Truncate(25);
             if (!isAlphaNumeric(newName))
             {
                 return "New name contained invalid characters. Valid characters are alphanumeric, commas, and spaces";
