@@ -50,9 +50,14 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
                 else
                 {
                     Medium med = new Medium(player.Character);
+                    Sheriff sher = new Sheriff(player.Character);
                     if (_manager.RegisterRole(med))
                     {
                         _logger.LogInformation($"{info.PlayerName} is a medium");
+                    }
+                    else if (_manager.RegisterRole(sher))
+                    {
+                        _logger.LogInformation($"{info.PlayerName} is a sheriff");
                     }
                     _logger.LogInformation($"- {info.PlayerName} is a crewmate.");
                 }

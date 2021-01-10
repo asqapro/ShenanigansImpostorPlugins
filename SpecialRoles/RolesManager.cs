@@ -27,8 +27,8 @@ namespace RolesManager
         }
         public bool RegisterRole(Role toRegister)
         {
-            RoleTypes type = toRegister.GetRoleType();
-            if (RegisteredRolesCount[type] < toRegister.GetTotalAllowed())
+            RoleTypes type = toRegister.RoleType;
+            if (RegisteredRolesCount[type] < toRegister.TotalAllowed)
             {
                 RegisteredRoles.Add(toRegister);
                 RegisteredRolesCount[type]++;
@@ -41,8 +41,10 @@ namespace RolesManager
         {
             foreach (var registered in RegisteredRoles)
             {
-                Console.WriteLine("Handling chat in manager");
-                registered.HandleChat(e);
+                if (registered._listeners.Contains(ListenerTypes.OnChat))
+                {
+                    registered.HandleChat(e);
+                }
             }
         }
     }

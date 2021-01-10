@@ -1,13 +1,13 @@
 using System.Collections.Generic;
 using Impostor.Api.Events.Player;
 using Impostor.Api.Net.Inner.Objects;
-using RolesManager;
 
 namespace Roles
 {
     public enum RoleTypes
     {
-        Medium
+        Medium,
+        Sheriff
     }
 
     public enum ListenerTypes
@@ -18,15 +18,15 @@ namespace Roles
     public abstract class Role
     {
         protected IInnerPlayerControl _player;
-        public ICollection<ListenerTypes> _listeners {get; set;}
+        public HashSet<ListenerTypes> _listeners {get; set;}
+        public int TotalAllowed {get; set;}
+        public RoleTypes RoleType {get; set;}
 
         public Role(IInnerPlayerControl player)
         {
             _player = player;
+            _listeners = new HashSet<ListenerTypes>();
         }
-
-        public abstract RoleTypes GetRoleType();
-        public abstract int GetTotalAllowed();
 
         public virtual void HandleChat(IPlayerChatEvent e)
         {

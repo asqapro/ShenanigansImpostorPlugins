@@ -1,8 +1,8 @@
 using System;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 using Impostor.Api.Events.Player;
 using Impostor.Api.Net.Inner.Objects;
+
 
 namespace Roles.Crew
 {
@@ -10,23 +10,13 @@ namespace Roles.Crew
     {
         public Medium(IInnerPlayerControl player) : base(player)
         {
-            _listeners = new List<ListenerTypes>();
             _listeners.Add(ListenerTypes.OnChat);
-        }
-
-        public override RoleTypes GetRoleType()
-        {
-            return RoleTypes.Medium;
-        }
-
-        public override int GetTotalAllowed()
-        {
-            return 2;
+            TotalAllowed = 2;
+            RoleType = RoleTypes.Medium;
         }
 
         private async ValueTask hearDead(IInnerPlayerControl deadSender, IInnerPlayerControl aliveSender, IInnerPlayerControl mediumReceiver, String message)
         {
-            Console.WriteLine("Hearing dead");
             var deadName = deadSender.PlayerInfo.PlayerName;
             var deadColor = deadSender.PlayerInfo.ColorId;
             var currentName = aliveSender.PlayerInfo.PlayerName;
@@ -51,6 +41,38 @@ namespace Roles.Crew
                     {
                         await hearDead(e.ClientPlayer.Character, player.Character, _player, e.Message);
                         break;
+                    }
+                }
+            }
+        }
+    }
+
+    public class Sheriff : Role
+    {
+        public Sheriff(IInnerPlayerControl player) : base(player)
+        {
+            _listeners.Add(ListenerTypes.OnChat);
+            TotalAllowed = 1;
+            RoleType = RoleTypes.Sheriff;
+        }
+
+        public override async void HandleChat(IPlayerChatEvent e)
+        {
+            if (e.Message.StartsWith("/"))
+            {
+                String[] parseCommand = e.Message.Split(" ");
+                if (parseCommand[0] == "/shoot")
+                {
+                    foreach (var player in e.Game.Players)
+                    {
+                        if (player.Character.PlayerInfo.PlayerName == parseCommand[1])
+                        {
+                            await player.Character.SetExiledAsync();
+                            if (!player.Character.PlayerInfo.IsImpostor)
+                            {
+                                await e.PlayerControl.SetExiledAsync();
+                            }
+                        }
                     }
                 }
             }
