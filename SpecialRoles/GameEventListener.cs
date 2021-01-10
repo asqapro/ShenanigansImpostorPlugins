@@ -1,8 +1,10 @@
 ﻿using Impostor.Api.Events;
 using Impostor.Api.Events.Player;
 using Microsoft.Extensions.Logging;
+using RolesManager;
+using Roles.Crew;
 
-namespace Impostor.Plugins.Example.Handlers
+namespace Impostor.Plugins.SpecialRoles.Handlers
 {
     /// <summary>
     ///     A class that listens for two events.
@@ -13,10 +15,15 @@ namespace Impostor.Plugins.Example.Handlers
     public class GameEventListener : IEventListener
     {
         private readonly ILogger<SpecialRoles> _logger;
+        private Manager man;
+        private CrewRoles crew;
 
         public GameEventListener(ILogger<SpecialRoles> logger)
         {
             _logger = logger;
+            man = new Manager();
+            crew = new CrewRoles(man);
+
         }
 
         /// <summary>
@@ -56,6 +63,8 @@ namespace Impostor.Plugins.Example.Handlers
         public void OnPlayerChat(IPlayerChatEvent e)
         {
             _logger.LogInformation($"{e.PlayerControl.PlayerInfo.PlayerName} said {e.Message}");
+
+            man.HandleChat(e);
         }
     }
 }
