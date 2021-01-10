@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Impostor.Api.Events;
 using Impostor.Api.Events.Player;
 using Microsoft.Extensions.Logging;
@@ -18,13 +19,11 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
     {
         private readonly ILogger<SpecialRoles> _logger;
         private IManager _manager;
-        private ICollection<Role> crewRoles;
 
         public GameEventListener(ILogger<SpecialRoles> logger)
         {
             _logger = logger;
             _manager = new Manager();
-            crewRoles = new List<Role>();
         }
 
         /// <summary>
@@ -38,6 +37,9 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
         {
             _logger.LogInformation($"Game is starting.");
 
+            HashSet<String> playerRoles = new HashSet<String>();
+            Random rnd = new Random();
+
             // This prints out for all players if they are impostor or crewmate.
             foreach (var player in e.Game.Players)
             {
@@ -49,15 +51,21 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
                 }
                 else
                 {
-                    Medium med = new Medium(player.Character);
-                    Sheriff sher = new Sheriff(player.Character);
-                    if (_manager.RegisterRole(med))
+                    if (!playerRoles.Contains(player.Character.PlayerInfo.PlayerName) && playerRoles.Count < 7)
                     {
-                        _logger.LogInformation($"{info.PlayerName} is a medium");
-                    }
-                    else if (_manager.RegisterRole(sher))
-                    {
-                        _logger.LogInformation($"{info.PlayerName} is a sheriff");
+                        if (rnd.Next(0, 1) == 1)
+                        {
+                            Medium med = new Medium(player.Character);
+                            _manager.RegisterRole(e.Game.Code, med);
+                            _logger.LogInformation($"{info.PlayerName} is a medium");
+                        }
+                        else
+                        {
+                            Sheriff sher = new Sheriff(player.Character);
+                            _manager.RegisterRole(e.Game.Code, sher);
+                            _logger.LogInformation($"{info.PlayerName} is a sheriff");
+                        }
+                        playerRoles.Add(player.Character.PlayerInfo.PlayerName);
                     }
                     _logger.LogInformation($"- {info.PlayerName} is a crewmate.");
                 }
@@ -68,6 +76,8 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
         public void OnGameEnded(IGameEndedEvent e)
         {
             _logger.LogInformation($"Game has ended.");
+
+            _manager.CleanUpRoles(e.Game.Code);
         }
 
         [EventListener]
@@ -75,7 +85,7 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
         {
             _logger.LogInformation($"{e.PlayerControl.PlayerInfo.PlayerName} said {e.Message}");
 
-            _manager.HandleChat(e);
+            _manager.HandleChat(e.Game.Code, e);
         }
     }
 }

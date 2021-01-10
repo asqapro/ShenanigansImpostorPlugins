@@ -37,7 +37,7 @@ namespace Roles.Crew
             {
                 foreach (var player in e.Game.Players)
                 {
-                    if (!player.Character.PlayerInfo.IsDead && player.Character != _player)
+                    if (!player.Character.PlayerInfo.IsDead && player.Character.PlayerInfo.PlayerName != _player.PlayerInfo.PlayerName)
                     {
                         await hearDead(e.ClientPlayer.Character, player.Character, _player, e.Message);
                         break;
@@ -60,7 +60,7 @@ namespace Roles.Crew
         {
             if (e.Message.StartsWith("/"))
             {
-                String[] parseCommand = e.Message.Split(" ");
+                String[] parseCommand = e.Message.Split(" ", 2);
                 if (parseCommand[0] == "/shoot")
                 {
                     foreach (var player in e.Game.Players)
