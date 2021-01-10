@@ -1,11 +1,8 @@
 using System;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using Impostor.Api.Events;
 using Impostor.Api.Events.Player;
 using Impostor.Api.Net.Inner.Objects;
-using Microsoft.Extensions.Logging;
-using RolesManager;
 
 namespace Roles.Crew
 {
@@ -13,6 +10,7 @@ namespace Roles.Crew
     {
         public Medium(IInnerPlayerControl player) : base(player)
         {
+            _listeners = new List<ListenerTypes>();
             _listeners.Add(ListenerTypes.OnChat);
         }
 
@@ -21,47 +19,41 @@ namespace Roles.Crew
             return RoleTypes.Medium;
         }
 
-        public override ICollection<ListenerTypes> GetListenerTypes()
-        {
-            return _listeners;
-        }
-
         public override int GetTotalAllowed()
         {
             return 2;
         }
 
-        private async ValueTask hearDead(IInnerPlayerControl deadSender, IInnerPlayerControl mediumReceiver, String message)
+        private async ValueTask hearDead(IInnerPlayerControl deadSender, IInnerPlayerControl aliveSender, IInnerPlayerControl mediumReceiver, String message)
         {
-            var currentName = deadSender.PlayerInfo.PlayerName;
-            await deadSender.SetNameAsync($"{currentName} (dead)");
-            await deadSender.SendChatToPlayerAsync($"[0000ffff]{message}[]", mediumReceiver);
-            await deadSender.SetNameAsync(currentName);
+            Console.WriteLine("Hearing dead");
+            var deadName = deadSender.PlayerInfo.PlayerName;
+            var deadColor = deadSender.PlayerInfo.ColorId;
+            var currentName = aliveSender.PlayerInfo.PlayerName;
+            var currentColor = aliveSender.PlayerInfo.ColorId;
+
+            await aliveSender.SetNameAsync($"{deadName} (dead)");
+            await aliveSender.SetColorAsync(deadColor);
+
+            await aliveSender.SendChatToPlayerAsync($"[0000ffff]{message}[]", mediumReceiver);
+
+            await aliveSender.SetNameAsync(currentName);
+            await aliveSender.SetColorAsync(currentColor);
         }
 
         public override async void HandleChat(IPlayerChatEvent e)
         {
             if (e.PlayerControl.PlayerInfo.IsDead)
             {
-                await hearDead(e.PlayerControl, _player, e.Message);
+                foreach (var player in e.Game.Players)
+                {
+                    if (!player.Character.PlayerInfo.IsDead && player.Character != _player)
+                    {
+                        await hearDead(e.ClientPlayer.Character, player.Character, _player, e.Message);
+                        break;
+                    }
+                }
             }
-        }
-    }
-
-
-    public class CrewRoles
-    {
-        Manager _manager;
-        public CrewRoles(Manager manager)
-        {
-            _manager = manager;
-        }
-
-        public void RegisterRoles(IInnerPlayerControl player)
-        {
-            Medium med = new Medium(player);
-
-            _manager.RegisterRole(med);
         }
     }
 }

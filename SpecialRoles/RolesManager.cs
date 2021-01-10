@@ -8,6 +8,7 @@ namespace RolesManager
     public interface IManager
     {
         bool RegisterRole(Role toRegister);
+        void HandleChat(IPlayerChatEvent e);
     }
 
     public class Manager : IManager
@@ -27,7 +28,7 @@ namespace RolesManager
         public bool RegisterRole(Role toRegister)
         {
             RoleTypes type = toRegister.GetRoleType();
-            if (RegisteredRolesCount[type] <= toRegister.GetTotalAllowed())
+            if (RegisteredRolesCount[type] < toRegister.GetTotalAllowed())
             {
                 RegisteredRoles.Add(toRegister);
                 RegisteredRolesCount[type]++;
@@ -40,6 +41,7 @@ namespace RolesManager
         {
             foreach (var registered in RegisteredRoles)
             {
+                Console.WriteLine("Handling chat in manager");
                 registered.HandleChat(e);
             }
         }

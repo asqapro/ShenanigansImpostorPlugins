@@ -1,7 +1,9 @@
-﻿using Impostor.Api.Events;
+﻿using System.Collections.Generic;
+using Impostor.Api.Events;
 using Impostor.Api.Events.Player;
 using Microsoft.Extensions.Logging;
 using RolesManager;
+using Roles;
 using Roles.Crew;
 
 namespace Impostor.Plugins.SpecialRoles.Handlers
@@ -15,15 +17,14 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
     public class GameEventListener : IEventListener
     {
         private readonly ILogger<SpecialRoles> _logger;
-        private Manager man;
-        private CrewRoles crew;
+        private IManager _manager;
+        private ICollection<Role> crewRoles;
 
         public GameEventListener(ILogger<SpecialRoles> logger)
         {
             _logger = logger;
-            man = new Manager();
-            crew = new CrewRoles(man);
-
+            _manager = new Manager();
+            crewRoles = new List<Role>();
         }
 
         /// <summary>
@@ -48,6 +49,11 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
                 }
                 else
                 {
+                    Medium med = new Medium(player.Character);
+                    if (_manager.RegisterRole(med))
+                    {
+                        _logger.LogInformation($"{info.PlayerName} is a medium");
+                    }
                     _logger.LogInformation($"- {info.PlayerName} is a crewmate.");
                 }
             }
@@ -64,7 +70,7 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
         {
             _logger.LogInformation($"{e.PlayerControl.PlayerInfo.PlayerName} said {e.Message}");
 
-            man.HandleChat(e);
+            _manager.HandleChat(e);
         }
     }
 }
