@@ -18,7 +18,6 @@ namespace Roles.Neutral
 
         public override async ValueTask HandlePlayerExile(IPlayerExileEvent e)
         {
-            await Task.Delay(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
             var playerName = _player.PlayerInfo.PlayerName;
             var playerColor = _player.PlayerInfo.ColorId;
             if (e.PlayerControl.PlayerInfo.PlayerName == _player.PlayerInfo.PlayerName)
