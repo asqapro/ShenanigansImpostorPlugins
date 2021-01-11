@@ -8,10 +8,11 @@ namespace Roles.Crew
 {
     public class Medium : Role
     {
+        public new static int TotalAllowed = 2;
+
         public Medium(IInnerPlayerControl player) : base(player)
         {
             _listeners.Add(ListenerTypes.OnPlayerChat);
-            TotalAllowed = 2;
             RoleType = RoleTypes.Medium;
         }
 
@@ -50,11 +51,11 @@ namespace Roles.Crew
     public class Sheriff : Role
     {
         private int ammo;
+        public new static int TotalAllowed = 1;
 
         public Sheriff(IInnerPlayerControl player) : base(player)
         {
             _listeners.Add(ListenerTypes.OnPlayerChat);
-            TotalAllowed = 1;
             RoleType = RoleTypes.Sheriff;
             ammo = 1;
         }

@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using Impostor.Api.Events.Player;
 using Impostor.Api.Net.Inner.Objects;
@@ -6,6 +7,8 @@ namespace Roles.Neutral
 {
     public class Jester : Role
     {
+        public new static int TotalAllowed = 1;
+
         public Jester(IInnerPlayerControl player) : base(player)
         {
             _listeners.Add(ListenerTypes.OnPlayerExile);
@@ -15,11 +18,24 @@ namespace Roles.Neutral
 
         public override async ValueTask HandlePlayerExile(IPlayerExileEvent e)
         {
+            await Task.Delay(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
             var playerName = _player.PlayerInfo.PlayerName;
-            if (e.PlayerControl.PlayerInfo.PlayerName == playerName)
+            var playerColor = _player.PlayerInfo.ColorId;
+            if (e.PlayerControl.PlayerInfo.PlayerName == _player.PlayerInfo.PlayerName)
             {
-                await e.PlayerControl.SetNameAsync($"{playerName} (Jester)");
-                await e.PlayerControl.SendChatAsync("The jester has won!");
+                foreach (var player in e.Game.Players)
+                {
+                    if (player.Character != _player)
+                    {
+                        var currentName = player.Character.PlayerInfo.PlayerName;
+                        var currentColor = player.Character.PlayerInfo.ColorId;
+                        await player.Character.SetNameAsync($"{playerName} (Jester)");
+                        await player.Character.SetColorAsync(currentColor);
+                        await player.Character.SendChatToPlayerAsync("The jester has won!", player.Character);
+                        await player.Character.SetNameAsync(currentName);
+                        await player.Character.SetColorAsync(currentColor);
+                    }
+                }
             }
         }
     }

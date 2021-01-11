@@ -25,6 +25,10 @@ namespace RolesManager
 
         public void RegisterRole(GameCode code, Role toRegister)
         {
+            if (!RegisteredRoles.ContainsKey(code))
+            {
+                RegisteredRoles[code] = new HashSet<Role>();
+            }
             RegisteredRoles[code].Add(toRegister);
         }
 
@@ -33,24 +37,25 @@ namespace RolesManager
             RegisteredRoles.Remove(code);
         }
 
-        public void HandlePlayerChat(GameCode code, IPlayerChatEvent e)
+        public async void HandlePlayerChat(GameCode code, IPlayerChatEvent e)
         {
             foreach (var registered in RegisteredRoles[code])
             {
                 if (registered._listeners.Contains(ListenerTypes.OnPlayerChat))
                 {
-                    registered.HandlePlayerChat(e);
+                    await registered.HandlePlayerChat(e);
                 }
             }
         }
 
-        public void HandlePlayerExile(GameCode code, IPlayerExileEvent e)
+        public async void HandlePlayerExile(GameCode code, IPlayerExileEvent e)
         {
+            Console.WriteLine("Handling exile in manager");
             foreach (var registered in RegisteredRoles[code])
             {
                 if (registered._listeners.Contains(ListenerTypes.OnPlayerExile))
                 {
-                    registered.HandlePlayerExile(e);
+                    await registered.HandlePlayerExile(e);
                 }
             }
         }

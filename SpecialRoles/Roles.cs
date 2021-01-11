@@ -33,12 +33,14 @@ namespace Roles
             _listeners = new HashSet<ListenerTypes>();
         }
 
-        public async virtual ValueTask HandlePlayerChat(IPlayerChatEvent e)
+        public virtual ValueTask HandlePlayerChat(IPlayerChatEvent e)
         {
+            return ValueTask.CompletedTask;
         }
 
-        public async virtual ValueTask HandlePlayerExile(IPlayerExileEvent e)
+        public virtual ValueTask HandlePlayerExile(IPlayerExileEvent e)
         {
+            return ValueTask.CompletedTask;
         }
     }
 }

@@ -8,6 +8,8 @@ using Roles;
 using Roles.Crew;
 using Roles.Neutral;
 
+using System.Linq;
+
 namespace Impostor.Plugins.SpecialRoles.Handlers
 {
 
@@ -44,27 +46,37 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
             _manager = new Manager();
         }
 
-        private IList<RoleTypes> calculateCrewRoles(IGameStartedEvent e)
+        private List<RoleTypes> calculateCrewRoles(IGameStartedEvent e)
         {
-            IList<RoleTypes> specialRoles = new List<RoleTypes>();
+            Console.WriteLine("Creating role list");
+            List<RoleTypes> specialRoles = new List<RoleTypes>();
 
             int playerCount = e.Game.PlayerCount;
-            int impostorRoleTotal = e.Game.Options.NumImpostors;
+            int impostorRoleTotal = 0;
+            foreach (var player in e.Game.Players)
+            {
+                if (player.Character.PlayerInfo.IsImpostor)
+                {
+                    impostorRoleTotal++;
+                }
+            }
 
             int percentSpecialRole = 70;
             int specialRoleTotal = ((playerCount * percentSpecialRole - 1) / 100) + 1;
 
             int crewRoleTotal = specialRoleTotal - impostorRoleTotal;
+            Console.WriteLine($"Crew role total: {crewRoleTotal}");
 
             int totalSheriff = 0;
             int totalMedium = 0;
             int totalJester = 0;
 
-            Random rng = new Random();  
+            Random rng = new Random();
 
             for (int iter = 0; iter < crewRoleTotal; iter++)
             {
-                if (rng.Next(0, 10) == 1 && totalJester < Jester.TotalAllowed)
+                Console.WriteLine("Adding special role");
+                if (rng.Next(0, 1) == 0 && totalJester < Jester.TotalAllowed)
                 {
                     specialRoles.Add(RoleTypes.Jester);
                     totalJester++;
@@ -87,6 +99,8 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
             }
 
             specialRoles.Shuffle();
+            Console.WriteLine("Special roles: ");
+            specialRoles.ForEach(item => Console.Write($"Role: {item}\n"));
 
             return specialRoles;
         }
@@ -102,8 +116,9 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
         {
             _logger.LogInformation($"Game is starting.");
 
-            IList<RoleTypes> specialRoles = calculateCrewRoles(e);
+            List<RoleTypes> specialRoles = calculateCrewRoles(e);
             int currentRoleIndex = 0;
+            specialRoles.ForEach(item => Console.Write(item));
 
             // This prints out for all players if they are impostor or crewmate.
             foreach (var player in e.Game.Players)
@@ -117,7 +132,10 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
                 else
                 {
                     var currentName = info.PlayerName;
+                    var currentColor = info.ColorId;
                     await player.Character.SetNameAsync("Server");
+                    await player.Character.SetColorAsync(Impostor.Api.Innersloth.Customization.ColorType.White);
+
                     if (specialRoles[currentRoleIndex] == RoleTypes.Medium)
                     {
                         Medium med = new Medium(player.Character);
@@ -145,9 +163,11 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
                     else
                     {
                         await player.Character.SendChatToPlayerAsync("You are a crewmate. Finish your tasks and kill the impostors to win", player.Character);
+                        currentRoleIndex++;
                     }
 
                     await player.Character.SetNameAsync(currentName);
+                    await player.Character.SetColorAsync(currentColor);
 
                     _logger.LogInformation($"- {info.PlayerName} is a crewmate.");
                 }
@@ -173,6 +193,8 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
         [EventListener]
         public void OnPlayerExile(IPlayerExileEvent e)
         {
+            _logger.LogInformation($"{e.PlayerControl.PlayerInfo.PlayerName} was exiled");
+            
             _manager.HandlePlayerExile(e.Game.Code, e);
         }
     }
