@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Impostor.Api.Events.Player;
 using Impostor.Api.Net.Inner.Objects;
 
@@ -6,6 +7,8 @@ namespace Roles
 {
     public enum RoleTypes
     {
+        Crew,
+        Impostor,
         Medium,
         Sheriff,
         Jester
@@ -13,8 +16,8 @@ namespace Roles
 
     public enum ListenerTypes
     {
-        OnChat,
-        OnExile
+        OnPlayerChat,
+        OnPlayerExile,
     }
 
     public abstract class Role
@@ -30,11 +33,11 @@ namespace Roles
             _listeners = new HashSet<ListenerTypes>();
         }
 
-        public virtual void HandleChat(IPlayerChatEvent e)
+        public async virtual ValueTask HandlePlayerChat(IPlayerChatEvent e)
         {
         }
 
-        public virtual void HandleExile(IPlayerExileEvent e)
+        public async virtual ValueTask HandlePlayerExile(IPlayerExileEvent e)
         {
         }
     }

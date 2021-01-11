@@ -10,7 +10,7 @@ namespace Roles.Crew
     {
         public Medium(IInnerPlayerControl player) : base(player)
         {
-            _listeners.Add(ListenerTypes.OnChat);
+            _listeners.Add(ListenerTypes.OnPlayerChat);
             TotalAllowed = 2;
             RoleType = RoleTypes.Medium;
         }
@@ -31,7 +31,7 @@ namespace Roles.Crew
             await aliveSender.SetColorAsync(currentColor);
         }
 
-        public override async void HandleChat(IPlayerChatEvent e)
+        public override async ValueTask HandlePlayerChat(IPlayerChatEvent e)
         {
             if (e.PlayerControl.PlayerInfo.IsDead)
             {
@@ -49,16 +49,44 @@ namespace Roles.Crew
 
     public class Sheriff : Role
     {
+        private int ammo;
+
         public Sheriff(IInnerPlayerControl player) : base(player)
         {
-            _listeners.Add(ListenerTypes.OnChat);
+            _listeners.Add(ListenerTypes.OnPlayerChat);
             TotalAllowed = 1;
             RoleType = RoleTypes.Sheriff;
+            ammo = 1;
         }
 
-        public override async void HandleChat(IPlayerChatEvent e)
+        private async ValueTask lawResponse(String message)
         {
-            if (e.Message.StartsWith("/"))
+            var currentName = _player.PlayerInfo.PlayerName;
+            var currentColor = _player.PlayerInfo.ColorId;
+
+            await _player.SetNameAsync("The Law");
+            await _player.SetColorAsync(Impostor.Api.Innersloth.Customization.ColorType.Red);
+
+            await _player.SendChatToPlayerAsync(message, _player);
+
+            await _player.SetNameAsync(currentName);
+            await _player.SetColorAsync(currentColor);
+        }
+
+        private async ValueTask shootPlayer(IInnerPlayerControl toShoot)
+        {
+            await toShoot.SetExiledAsync();
+            ammo--;
+            if (!toShoot.PlayerInfo.IsImpostor)
+            {
+                await lawResponse("You shot a crewmate!");
+                await _player.SetExiledAsync();
+            }
+        }
+
+        public override async ValueTask HandlePlayerChat(IPlayerChatEvent e)
+        {
+            if (e.Message.StartsWith("/") && e.PlayerControl.PlayerInfo.PlayerName == _player.PlayerInfo.PlayerName)
             {
                 String commandParsePattern = @"/shoot ((?:\w\s?)+)";
                 var parsedCommand = Regex.Match(e.Message, commandParsePattern);
@@ -68,11 +96,15 @@ namespace Roles.Crew
                     {
                         if (player.Character.PlayerInfo.PlayerName == parsedCommand.Groups[1].Value)
                         {
-                            await player.Character.SetExiledAsync();
-                            if (!player.Character.PlayerInfo.IsImpostor)
+                            if (ammo > 0)
                             {
-                                await e.PlayerControl.SetExiledAsync();
+                                await shootPlayer(player.Character);
                             }
+                            else
+                            {
+                                await lawResponse("You have no bullets left");
+                            }
+                            break;
                         }
                     }
                 }

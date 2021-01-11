@@ -9,7 +9,8 @@ namespace RolesManager
     public interface IManager
     {
         void RegisterRole(GameCode code, Role toRegister);
-        void HandleChat(GameCode code, IPlayerChatEvent e);
+        void HandlePlayerChat(GameCode code, IPlayerChatEvent e);
+        void HandlePlayerExile(GameCode code, IPlayerExileEvent e);
         void CleanUpRoles(GameCode code);
     }
 
@@ -32,19 +33,24 @@ namespace RolesManager
             RegisteredRoles.Remove(code);
         }
 
-        public void HandleChat(GameCode code, IPlayerChatEvent e)
+        public void HandlePlayerChat(GameCode code, IPlayerChatEvent e)
         {
-            foreach(KeyValuePair<GameCode, HashSet<Role>> entry in RegisteredRoles)
+            foreach (var registered in RegisteredRoles[code])
             {
-                if (entry.Key == code)
+                if (registered._listeners.Contains(ListenerTypes.OnPlayerChat))
                 {
-                    foreach (var registered in entry.Value)
-                    {
-                        if (registered._listeners.Contains(ListenerTypes.OnChat))
-                        {
-                            registered.HandleChat(e);
-                        }
-                    }
+                    registered.HandlePlayerChat(e);
+                }
+            }
+        }
+
+        public void HandlePlayerExile(GameCode code, IPlayerExileEvent e)
+        {
+            foreach (var registered in RegisteredRoles[code])
+            {
+                if (registered._listeners.Contains(ListenerTypes.OnPlayerExile))
+                {
+                    registered.HandlePlayerExile(e);
                 }
             }
         }
