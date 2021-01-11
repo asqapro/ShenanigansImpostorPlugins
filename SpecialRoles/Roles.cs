@@ -7,19 +7,21 @@ namespace Roles
     public enum RoleTypes
     {
         Medium,
-        Sheriff
+        Sheriff,
+        Jester
     }
 
     public enum ListenerTypes
     {
-        OnChat
+        OnChat,
+        OnExile
     }
 
     public abstract class Role
     {
         protected IInnerPlayerControl _player;
         public HashSet<ListenerTypes> _listeners {get; set;}
-        public int TotalAllowed {get; set;}
+        public static int TotalAllowed {get; set;}
         public RoleTypes RoleType {get; set;}
 
         public Role(IInnerPlayerControl player)
@@ -29,6 +31,10 @@ namespace Roles
         }
 
         public virtual void HandleChat(IPlayerChatEvent e)
+        {
+        }
+
+        public virtual void HandleExile(IPlayerExileEvent e)
         {
         }
     }

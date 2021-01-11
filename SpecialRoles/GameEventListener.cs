@@ -6,9 +6,27 @@ using Microsoft.Extensions.Logging;
 using RolesManager;
 using Roles;
 using Roles.Crew;
+using Roles.Neutral;
 
 namespace Impostor.Plugins.SpecialRoles.Handlers
 {
+
+    public static class Shuffler
+    {
+        private static Random rng = new Random();  
+        public static void Shuffle<T>(this IList<T> list)  
+        {  
+            int n = list.Count;  
+            while (n > 1) {  
+                n--;  
+                int k = rng.Next(n + 1);  
+                T value = list[k];  
+                list[k] = list[n];  
+                list[n] = value;  
+            }  
+        }
+    }
+
     /// <summary>
     ///     A class that listens for two events.
     ///     It may be more but this is just an example.
@@ -26,6 +44,52 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
             _manager = new Manager();
         }
 
+        private ICollection<RoleTypes> calculateSpecialRoles(IGameStartedEvent e)
+        {
+            IList<RoleTypes> specialRoles = new List<RoleTypes>();
+
+            int playerCount = e.Game.PlayerCount;
+            int impostorRoleTotal = e.Game.Options.NumImpostors;
+
+            int percentSpecialRole = 70;
+            int specialRoleTotal = ((playerCount * percentSpecialRole - 1) / 100) + 1;
+
+            int crewRoleTotal = specialRoleTotal - impostorRoleTotal;
+
+            int totalSheriff = 0;
+            int totalMedium = 0;
+            int totalJester = 0;
+
+            Random rng = new Random();  
+
+            for (int iter = 0; iter < crewRoleTotal; iter++)
+            {
+                if (rng.Next(0, 10) == 1 && totalJester < Jester.TotalAllowed)
+                {
+                    specialRoles.Add(RoleTypes.Jester);
+                }
+                else if (totalSheriff < Sheriff.TotalAllowed)
+                {
+                    specialRoles.Add(RoleTypes.Sheriff);
+                    totalSheriff++;
+                }
+                else if (totalMedium < Medium.TotalAllowed)
+                {
+                    specialRoles.Add(RoleTypes.Medium);
+                    totalMedium++;
+                }
+            }
+
+            for (int iter = 0; iter < impostorRoleTotal; iter++)
+            {
+                //add impostor roles
+            }
+
+            specialRoles.Shuffle();
+
+            return specialRoles;
+        }
+
         /// <summary>
         ///     An example event listener.
         /// </summary>
@@ -37,7 +101,12 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
         {
             _logger.LogInformation($"Game is starting.");
 
-            HashSet<String> playerRoles = new HashSet<String>();
+            HashSet<String> crewRoles = new HashSet<String>();
+            HashSet<String> impostorRoles = new HashSet<String>();
+            HashSet<String> neutralRoles = new HashSet<String>();
+
+            calculateSpecialRoles(e);
+
             Random rnd = new Random();
 
             // This prints out for all players if they are impostor or crewmate.
@@ -51,7 +120,7 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
                 }
                 else
                 {
-                    if (!playerRoles.Contains(player.Character.PlayerInfo.PlayerName) && playerRoles.Count < 7)
+                    if (!crewRoles.Contains(player.Character.PlayerInfo.PlayerName) && crewRoles.Count < 7)
                     {
                         if (rnd.Next(0, 1) == 1)
                         {
@@ -65,7 +134,7 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
                             _manager.RegisterRole(e.Game.Code, sher);
                             _logger.LogInformation($"{info.PlayerName} is a sheriff");
                         }
-                        playerRoles.Add(player.Character.PlayerInfo.PlayerName);
+                        crewRoles.Add(player.Character.PlayerInfo.PlayerName);
                     }
                     _logger.LogInformation($"- {info.PlayerName} is a crewmate.");
                 }

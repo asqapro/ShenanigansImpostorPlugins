@@ -1,8 +1,8 @@
 using System;
 using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 using Impostor.Api.Events.Player;
 using Impostor.Api.Net.Inner.Objects;
-
 
 namespace Roles.Crew
 {
@@ -60,12 +60,13 @@ namespace Roles.Crew
         {
             if (e.Message.StartsWith("/"))
             {
-                String[] parseCommand = e.Message.Split(" ", 2);
-                if (parseCommand[0] == "/shoot")
+                String commandParsePattern = @"/shoot ((?:\w\s?)+)";
+                var parsedCommand = Regex.Match(e.Message, commandParsePattern);
+                if (parsedCommand.Success)
                 {
                     foreach (var player in e.Game.Players)
                     {
-                        if (player.Character.PlayerInfo.PlayerName == parseCommand[1])
+                        if (player.Character.PlayerInfo.PlayerName == parsedCommand.Groups[1].Value)
                         {
                             await player.Character.SetExiledAsync();
                             if (!player.Character.PlayerInfo.IsImpostor)
