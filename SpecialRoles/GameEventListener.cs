@@ -7,8 +7,7 @@ using RolesManager;
 using Roles;
 using Roles.Crew;
 using Roles.Neutral;
-
-using System.Linq;
+using Roles.Evil;
 
 namespace Impostor.Plugins.SpecialRoles.Handlers
 {
@@ -125,8 +124,16 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
             {
                 var info = player.Character.PlayerInfo;
                 var isImpostor = info.IsImpostor;
+                Random rng = new Random();
                 if (isImpostor)
                 {
+                    if (rng.Next(0, 2) == 1)
+                    {
+                        Hitman hit = new Hitman(player.Character);
+                        _manager.RegisterRole(e.Game.Code, hit);
+                        _logger.LogInformation($"{info.PlayerName} is a hitman");
+                        await player.Character.SendChatToPlayerAsync("You are a hitman. You may silent kill one player a game", player.Character);
+                    }
                     _logger.LogInformation($"- {info.PlayerName} is an impostor.");
                 }
                 else

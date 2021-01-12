@@ -39,6 +39,10 @@ namespace RolesManager
 
         public async void HandlePlayerChat(GameCode code, IPlayerChatEvent e)
         {
+            if (!RegisteredRoles.ContainsKey(code))
+            {
+                return;
+            }
             foreach (var registered in RegisteredRoles[code])
             {
                 if (registered._listeners.Contains(ListenerTypes.OnPlayerChat))
@@ -50,7 +54,10 @@ namespace RolesManager
 
         public async void HandlePlayerExile(GameCode code, IPlayerExileEvent e)
         {
-            Console.WriteLine("Handling exile in manager");
+            if (!RegisteredRoles.ContainsKey(code))
+            {
+                return;
+            }
             foreach (var registered in RegisteredRoles[code])
             {
                 if (registered._listeners.Contains(ListenerTypes.OnPlayerExile))

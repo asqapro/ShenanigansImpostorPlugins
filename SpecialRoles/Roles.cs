@@ -11,7 +11,8 @@ namespace Roles
         Impostor,
         Medium,
         Sheriff,
-        Jester
+        Jester,
+        Hitman
     }
 
     public enum ListenerTypes

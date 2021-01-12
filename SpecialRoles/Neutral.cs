@@ -1,4 +1,3 @@
-using System;
 using System.Threading.Tasks;
 using Impostor.Api.Events.Player;
 using Impostor.Api.Net.Inner.Objects;
