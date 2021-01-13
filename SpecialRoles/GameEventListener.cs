@@ -47,7 +47,6 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
 
         private List<RoleTypes> calculateCrewRoles(IGameStartedEvent e)
         {
-            Console.WriteLine("Creating role list");
             List<RoleTypes> specialRoles = new List<RoleTypes>();
 
             int playerCount = e.Game.PlayerCount;
@@ -64,7 +63,6 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
             int specialRoleTotal = ((playerCount * percentSpecialRole - 1) / 100) + 1;
 
             int crewRoleTotal = specialRoleTotal - impostorRoleTotal;
-            Console.WriteLine($"Crew role total: {crewRoleTotal}");
 
             int totalSheriff = 0;
             int totalMedium = 0;
@@ -74,7 +72,6 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
 
             for (int iter = 0; iter < crewRoleTotal; iter++)
             {
-                Console.WriteLine("Adding special role");
                 if (rng.Next(0, 1) == 0 && totalJester < Jester.TotalAllowed)
                 {
                     specialRoles.Add(RoleTypes.Jester);
@@ -98,8 +95,6 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
             }
 
             specialRoles.Shuffle();
-            Console.WriteLine("Special roles: ");
-            specialRoles.ForEach(item => Console.Write($"Role: {item}\n"));
 
             return specialRoles;
         }
@@ -127,12 +122,19 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
                 Random rng = new Random();
                 if (isImpostor)
                 {
-                    if (rng.Next(0, 2) == 1)
+                    if (rng.Next(0, 20) == 5)
                     {
                         Hitman hit = new Hitman(player.Character);
                         _manager.RegisterRole(e.Game.Code, hit);
                         _logger.LogInformation($"{info.PlayerName} is a hitman");
                         await player.Character.SendChatToPlayerAsync("You are a hitman. You may silent kill one player a game", player.Character);
+                    }
+                    else if (rng.Next(0, 1) == 0)
+                    {
+                        VoodooLady voodoo = new VoodooLady(player.Character);
+                        _manager.RegisterRole(e.Game.Code, voodoo);
+                        _logger.LogInformation($"{info.PlayerName} is a voodoo lady");
+                        await player.Character.SendChatToPlayerAsync("You are a voodoo lady. Pick a kill word and target", player.Character);
                     }
                     _logger.LogInformation($"- {info.PlayerName} is an impostor.");
                 }

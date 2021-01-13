@@ -32,7 +32,7 @@ namespace Roles.Crew
             await aliveSender.SetColorAsync(currentColor);
         }
 
-        public override async ValueTask HandlePlayerChat(IPlayerChatEvent e)
+        public override async ValueTask<bool> HandlePlayerChat(IPlayerChatEvent e)
         {
             if (e.PlayerControl.PlayerInfo.IsDead)
             {
@@ -44,7 +44,9 @@ namespace Roles.Crew
                         break;
                     }
                 }
+                return true;
             }
+            return false;
         }
     }
 
@@ -85,7 +87,7 @@ namespace Roles.Crew
             }
         }
 
-        public override async ValueTask HandlePlayerChat(IPlayerChatEvent e)
+        public override async ValueTask<bool> HandlePlayerChat(IPlayerChatEvent e)
         {
             if (e.Message.StartsWith("/") && e.PlayerControl.PlayerInfo.PlayerName == _player.PlayerInfo.PlayerName)
             {
@@ -100,6 +102,7 @@ namespace Roles.Crew
                             if (ammo > 0)
                             {
                                 await shootPlayer(player.Character);
+                                return true;
                             }
                             else
                             {
@@ -110,6 +113,7 @@ namespace Roles.Crew
                     }
                 }
             }
+            return false;
         }
     }
 }

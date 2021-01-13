@@ -12,7 +12,8 @@ namespace Roles
         Medium,
         Sheriff,
         Jester,
-        Hitman
+        Hitman,
+        VoodooLady
     }
 
     public enum ListenerTypes
@@ -34,14 +35,14 @@ namespace Roles
             _listeners = new HashSet<ListenerTypes>();
         }
 
-        public virtual ValueTask HandlePlayerChat(IPlayerChatEvent e)
+        public virtual ValueTask<bool> HandlePlayerChat(IPlayerChatEvent e)
         {
-            return ValueTask.CompletedTask;
+            return ValueTask.FromResult(false);
         }
 
-        public virtual ValueTask HandlePlayerExile(IPlayerExileEvent e)
+        public virtual ValueTask<bool> HandlePlayerExile(IPlayerExileEvent e)
         {
-            return ValueTask.CompletedTask;
+            return ValueTask.FromResult(false);
         }
     }
 }

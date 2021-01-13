@@ -18,9 +18,12 @@ namespace RolesManager
     {
         Dictionary<GameCode, HashSet<Role>> RegisteredRoles;
 
+        private bool playerKilledPlayer;
+
         public Manager()
         {
             RegisteredRoles = new Dictionary<GameCode, HashSet<Role>>();
+            playerKilledPlayer = false;
         }
 
         public void RegisterRole(GameCode code, Role toRegister)
@@ -47,7 +50,14 @@ namespace RolesManager
             {
                 if (registered._listeners.Contains(ListenerTypes.OnPlayerChat))
                 {
-                    await registered.HandlePlayerChat(e);
+                    bool handleResp = await registered.HandlePlayerChat(e);
+                    if (registered.RoleType == RoleTypes.Sheriff || registered.RoleType == RoleTypes.Hitman)
+                    {
+                        if (handleResp)
+                        {
+                            playerKilledPlayer = true;
+                        }
+                    }
                 }
             }
         }
@@ -62,9 +72,14 @@ namespace RolesManager
             {
                 if (registered._listeners.Contains(ListenerTypes.OnPlayerExile))
                 {
+                    if (registered.RoleType == RoleTypes.Jester && playerKilledPlayer)
+                    {
+                        continue;
+                    }
                     await registered.HandlePlayerExile(e);
                 }
             }
+            playerKilledPlayer = false;
         }
     }
 }

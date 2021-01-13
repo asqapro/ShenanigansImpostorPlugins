@@ -15,7 +15,7 @@ namespace Roles.Neutral
             RoleType = RoleTypes.Jester;
         }
 
-        public override async ValueTask HandlePlayerExile(IPlayerExileEvent e)
+        public override async ValueTask<bool> HandlePlayerExile(IPlayerExileEvent e)
         {
             var playerName = _player.PlayerInfo.PlayerName;
             var playerColor = _player.PlayerInfo.ColorId;
@@ -34,7 +34,9 @@ namespace Roles.Neutral
                         await player.Character.SetColorAsync(currentColor);
                     }
                 }
+                return true;
             }
+            return false;
         }
     }
 }
