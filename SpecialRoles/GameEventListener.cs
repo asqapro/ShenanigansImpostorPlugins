@@ -2,12 +2,10 @@
 using System.Collections.Generic;
 using Impostor.Api.Events;
 using Impostor.Api.Events.Player;
+using Impostor.Api.Games;
 using Microsoft.Extensions.Logging;
 using RolesManager;
 using Roles;
-using Roles.Crew;
-using Roles.Neutral;
-using Roles.Evil;
 
 namespace Impostor.Plugins.SpecialRoles.Handlers
 {
@@ -37,12 +35,12 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
     public class GameEventListener : IEventListener
     {
         private readonly ILogger<SpecialRoles> _logger;
-        private IManager _manager;
+        private Dictionary<GameCode, IManager> _manager;
 
         public GameEventListener(ILogger<SpecialRoles> logger)
         {
             _logger = logger;
-            _manager = new Manager();
+            _manager = new Dictionary<GameCode, IManager>();
         }
 
         /// <summary>
@@ -56,6 +54,8 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
         {
             _logger.LogInformation($"Game is starting.");
 
+            _manager[e.Game.Code] = new Manager();
+
             // This prints out for all players if they are impostor or crewmate.
             foreach (var player in e.Game.Players)
             {
@@ -67,11 +67,11 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
                     switch (rng.Next(1, 3))
                     {
                         case 1:
-                            _manager.RegisterRole(player.Character, RoleTypes.Hitman);
+                            _manager[e.Game.Code].RegisterRole(player.Character, RoleTypes.Hitman);
                             _logger.LogInformation($"{info.PlayerName} is a hitman");
                             break;
                         case 2:
-                            _manager.RegisterRole(player.Character, RoleTypes.VoodooLady);
+                            _manager[e.Game.Code].RegisterRole(player.Character, RoleTypes.VoodooLady);
                             _logger.LogInformation($"{info.PlayerName} is a voodoo lady");
                             break;
                         default:
@@ -85,16 +85,16 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
                     {
                         case 1:
                         {
-                            _manager.RegisterRole(player.Character, RoleTypes.Medium);
+                            _manager[e.Game.Code].RegisterRole(player.Character, RoleTypes.Medium);
                             _logger.LogInformation($"{info.PlayerName} is a medium");
                             break;
                         }
                         case 2:
-                            _manager.RegisterRole(player.Character, RoleTypes.Sheriff);
+                            _manager[e.Game.Code].RegisterRole(player.Character, RoleTypes.Sheriff);
                             _logger.LogInformation($"{info.PlayerName} is a sheriff");
                             break;
                         case 3:
-                            _manager.RegisterRole(player.Character, RoleTypes.Jester);
+                            _manager[e.Game.Code].RegisterRole(player.Character, RoleTypes.Jester);
                             _logger.LogInformation($"{info.PlayerName} is a jester");
                             break;
                         default:
@@ -109,6 +109,7 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
         public void OnGameEnded(IGameEndedEvent e)
         {
             _logger.LogInformation($"Game has ended.");
+            _manager.Remove(e.Game.Code);
         }
 
         [EventListener]
@@ -116,7 +117,7 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
         {
             _logger.LogInformation($"{e.PlayerControl.PlayerInfo.PlayerName} said {e.Message}");
 
-            _manager.HandleEvent(e);
+            _manager[e.Game.Code].HandleEvent(e);
         }
 
         [EventListener]
@@ -124,13 +125,13 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
         {
             _logger.LogInformation($"{e.PlayerControl.PlayerInfo.PlayerName} was exiled");
             
-            _manager.HandleEvent(e);
+            _manager[e.Game.Code].HandleEvent(e);
         }
 
         [EventListener]
         public void OnPlayerVoted(IPlayerVotedEvent e)
         {
-            _manager.HandleEvent(e);
+            _manager[e.Game.Code].HandleEvent(e);
         }
     }
 }

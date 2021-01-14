@@ -49,7 +49,7 @@ namespace RolesManager
                     break;
                 case RoleTypes.VoodooLady:
                     RegisteredRoles[player.PlayerInfo.PlayerName] = new VoodooLady(player);
-                    roleMessage = "You are a voodoo lady. Pick a kill word and target using /setkillword";
+                    roleMessage = "You are a voodoo lady. \nPick a kill word and target using /setkillword";
                     break;
                 default:
                     break;
