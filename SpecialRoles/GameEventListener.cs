@@ -45,60 +45,6 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
             _manager = new Manager();
         }
 
-        private List<RoleTypes> calculateCrewRoles(IGameStartedEvent e)
-        {
-            List<RoleTypes> specialRoles = new List<RoleTypes>();
-
-            int playerCount = e.Game.PlayerCount;
-            int impostorRoleTotal = 0;
-            foreach (var player in e.Game.Players)
-            {
-                if (player.Character.PlayerInfo.IsImpostor)
-                {
-                    impostorRoleTotal++;
-                }
-            }
-
-            int percentSpecialRole = 70;
-            int specialRoleTotal = ((playerCount * percentSpecialRole - 1) / 100) + 1;
-
-            int crewRoleTotal = specialRoleTotal - impostorRoleTotal;
-
-            int totalSheriff = 0;
-            int totalMedium = 0;
-            int totalJester = 0;
-
-            Random rng = new Random();
-
-            for (int iter = 0; iter < crewRoleTotal; iter++)
-            {
-                if (rng.Next(0, 1) == 0 && totalJester < Jester.TotalAllowed)
-                {
-                    specialRoles.Add(RoleTypes.Jester);
-                    totalJester++;
-                }
-                else if (totalSheriff < Sheriff.TotalAllowed)
-                {
-                    specialRoles.Add(RoleTypes.Sheriff);
-                    totalSheriff++;
-                }
-                else if (totalMedium < Medium.TotalAllowed)
-                {
-                    specialRoles.Add(RoleTypes.Medium);
-                    totalMedium++;
-                }
-            }
-
-            for (int iter = 0; iter < (playerCount - specialRoleTotal); iter++)
-            {
-                specialRoles.Add(RoleTypes.Crew);
-            }
-
-            specialRoles.Shuffle();
-
-            return specialRoles;
-        }
-
         /// <summary>
         ///     An example event listener.
         /// </summary>
@@ -106,13 +52,9 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
         ///     The event you want to listen for.
         /// </param>
         [EventListener]
-        public async void OnGameStarted(IGameStartedEvent e)
+        public void OnGameStarted(IGameStartedEvent e)
         {
             _logger.LogInformation($"Game is starting.");
-
-            List<RoleTypes> specialRoles = calculateCrewRoles(e);
-            int currentRoleIndex = 0;
-            specialRoles.ForEach(item => Console.Write(item));
 
             // This prints out for all players if they are impostor or crewmate.
             foreach (var player in e.Game.Players)
@@ -122,63 +64,43 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
                 Random rng = new Random();
                 if (isImpostor)
                 {
-                    if (rng.Next(0, 20) == 5)
+                    switch (rng.Next(1, 3))
                     {
-                        Hitman hit = new Hitman(player.Character);
-                        _manager.RegisterRole(e.Game.Code, hit);
-                        _logger.LogInformation($"{info.PlayerName} is a hitman");
-                        await player.Character.SendChatToPlayerAsync("You are a hitman. You may silent kill one player a game", player.Character);
+                        case 1:
+                            _manager.RegisterRole(player.Character, RoleTypes.Hitman);
+                            _logger.LogInformation($"{info.PlayerName} is a hitman");
+                            break;
+                        case 2:
+                            _manager.RegisterRole(player.Character, RoleTypes.VoodooLady);
+                            _logger.LogInformation($"{info.PlayerName} is a voodoo lady");
+                            break;
+                        default:
+                            _logger.LogInformation($"- {info.PlayerName} is an impostor.");
+                            break;
                     }
-                    else if (rng.Next(0, 1) == 0)
-                    {
-                        VoodooLady voodoo = new VoodooLady(player.Character);
-                        _manager.RegisterRole(e.Game.Code, voodoo);
-                        _logger.LogInformation($"{info.PlayerName} is a voodoo lady");
-                        await player.Character.SendChatToPlayerAsync("You are a voodoo lady. Pick a kill word and target", player.Character);
-                    }
-                    _logger.LogInformation($"- {info.PlayerName} is an impostor.");
                 }
                 else
                 {
-                    var currentName = info.PlayerName;
-                    var currentColor = info.ColorId;
-                    await player.Character.SetNameAsync("Server");
-                    await player.Character.SetColorAsync(Impostor.Api.Innersloth.Customization.ColorType.White);
-
-                    if (specialRoles[currentRoleIndex] == RoleTypes.Medium)
+                    switch (rng.Next(1, 4))
                     {
-                        Medium med = new Medium(player.Character);
-                        _manager.RegisterRole(e.Game.Code, med);
-                        _logger.LogInformation($"{info.PlayerName} is a medium");
-                        await player.Character.SendChatToPlayerAsync("You are a medium. You can hear the dead speak", player.Character);
-                        currentRoleIndex++;
+                        case 1:
+                        {
+                            _manager.RegisterRole(player.Character, RoleTypes.Medium);
+                            _logger.LogInformation($"{info.PlayerName} is a medium");
+                            break;
+                        }
+                        case 2:
+                            _manager.RegisterRole(player.Character, RoleTypes.Sheriff);
+                            _logger.LogInformation($"{info.PlayerName} is a sheriff");
+                            break;
+                        case 3:
+                            _manager.RegisterRole(player.Character, RoleTypes.Jester);
+                            _logger.LogInformation($"{info.PlayerName} is a jester");
+                            break;
+                        default:
+                            _logger.LogInformation($"{info.PlayerName} is a crewmate");
+                            break;
                     }
-                    else if (specialRoles[currentRoleIndex] == RoleTypes.Sheriff)
-                    {
-                        Sheriff sher = new Sheriff(player.Character);
-                        _manager.RegisterRole(e.Game.Code, sher);
-                        _logger.LogInformation($"{info.PlayerName} is a sheriff");
-                        await player.Character.SendChatToPlayerAsync("You are a sheriff. You can shoot one person, but you will die if you hit a crewmate", player.Character);
-                        currentRoleIndex++;
-                    }
-                    else if (specialRoles[currentRoleIndex] == RoleTypes.Jester)
-                    {
-                        Jester jest = new Jester(player.Character);
-                        _manager.RegisterRole(e.Game.Code, jest);
-                        _logger.LogInformation($"{info.PlayerName} is a jester");
-                        await player.Character.SendChatToPlayerAsync("You are a jester. Trick the crew into ejecting you to win", player.Character);
-                        currentRoleIndex++;
-                    }
-                    else
-                    {
-                        await player.Character.SendChatToPlayerAsync("You are a crewmate. Finish your tasks and kill the impostors to win", player.Character);
-                        currentRoleIndex++;
-                    }
-
-                    await player.Character.SetNameAsync(currentName);
-                    await player.Character.SetColorAsync(currentColor);
-
-                    _logger.LogInformation($"- {info.PlayerName} is a crewmate.");
                 }
             }
         }
@@ -187,8 +109,6 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
         public void OnGameEnded(IGameEndedEvent e)
         {
             _logger.LogInformation($"Game has ended.");
-
-            _manager.CleanUpRoles(e.Game.Code);
         }
 
         [EventListener]
@@ -196,7 +116,7 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
         {
             _logger.LogInformation($"{e.PlayerControl.PlayerInfo.PlayerName} said {e.Message}");
 
-            _manager.HandlePlayerChat(e.Game.Code, e);
+            _manager.HandleEvent(e);
         }
 
         [EventListener]
@@ -204,7 +124,13 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
         {
             _logger.LogInformation($"{e.PlayerControl.PlayerInfo.PlayerName} was exiled");
             
-            _manager.HandlePlayerExile(e.Game.Code, e);
+            _manager.HandleEvent(e);
+        }
+
+        [EventListener]
+        public void OnPlayerVoted(IPlayerVotedEvent e)
+        {
+            _manager.HandleEvent(e);
         }
     }
 }

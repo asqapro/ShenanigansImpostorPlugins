@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 using Impostor.Api.Events.Player;
@@ -14,7 +15,6 @@ namespace Roles.Evil
         public Hitman(IInnerPlayerControl player) : base(player)
         {
             _listeners.Add(ListenerTypes.OnPlayerChat);
-            TotalAllowed = 1;
             RoleType = RoleTypes.Hitman;
             ammo = 1;
         }
@@ -74,14 +74,15 @@ namespace Roles.Evil
         public new static int TotalAllowed = 1;
         private String killWord;
         private String killTarget;
+        private bool targetKilled;
 
         public VoodooLady(IInnerPlayerControl player) : base(player)
         {
             _listeners.Add(ListenerTypes.OnPlayerChat);
-            TotalAllowed = 1;
             RoleType = RoleTypes.VoodooLady;
             killWord = "";
             killTarget = "";
+            targetKilled = false;
         }
 
         private async ValueTask evilResponse(String message)
@@ -100,8 +101,11 @@ namespace Roles.Evil
 
         private async ValueTask silentKillPlayer(IInnerPlayerControl toKill)
         {
+            var currentName = _player.PlayerInfo.PlayerName;
+            await _player.SetNameAsync($"{currentName} (Voodoo Lady)");
             await _player.SendChatToPlayerAsync("I'll have your tongue for that!", toKill);
             await toKill.SetExiledAsync();
+            await _player.SetNameAsync(currentName);
         }
 
         public override async ValueTask<bool> HandlePlayerChat(IPlayerChatEvent e)
@@ -110,32 +114,45 @@ namespace Roles.Evil
             {
                 if (e.PlayerControl.PlayerInfo.PlayerName == _player.PlayerInfo.PlayerName)
                 {
-                    String commandParsePattern = @"/setkillword ((?:\w\s?)+) '(\w+)'";
+                    String commandParsePattern = @"/setkillword (\w+) '((?:\w\s?)+)'";
                     var parsedCommand = Regex.Match(e.Message, commandParsePattern);
                     if (parsedCommand.Success)
                     {
                         if (killWord != "" || killTarget != "")
                         {
                             await evilResponse("Kill target and word have already been set, you cannot change them");
+                            return false;
                         }
-                        else
+                        bool foundPlayer = false;
+                        foreach (var player in e.Game.Players)
                         {
-                            killWord = parsedCommand.Groups[1].Value;
-                            killTarget = parsedCommand.Groups[2].Value;
-                            await evilResponse("Kill target and word have been set");
+                            if (player.Character.PlayerInfo.PlayerName == parsedCommand.Groups[2].Value)
+                            {
+                                foundPlayer = true;
+                                break;
+                            }
                         }
-                    }
-                    else
-                    {
-                        await evilResponse("Failed to set kill target and / or word");
+                        if (!foundPlayer)
+                        {
+                            await evilResponse("Kill target is a not a player in this game");
+                            return false;
+                        }
+                        killWord = parsedCommand.Groups[1].Value;
+                        killTarget = parsedCommand.Groups[2].Value;
+                        await evilResponse("Kill target and word have been set");
                     }
                     return false;
                 }
             }
-            else if (e.Message.Contains(killWord) && e.PlayerControl.PlayerInfo.PlayerName == killTarget)
+            String[] checkWords = e.Message.Split(" ");
+            if ((checkWords.Contains(killWord) || checkWords.Contains($"'{killWord}'")) && e.PlayerControl.PlayerInfo.PlayerName == killTarget)
             {
-                await silentKillPlayer(e.PlayerControl);
-                return true;
+                if (!targetKilled)
+                {
+                    await silentKillPlayer(e.PlayerControl);
+                    targetKilled = true;
+                    return true;
+                }
             }
             return false;
         }

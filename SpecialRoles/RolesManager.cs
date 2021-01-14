@@ -1,85 +1,103 @@
 using System;
 using System.Collections.Generic;
 using Impostor.Api.Events.Player;
-using Impostor.Api.Games;
+using Impostor.Api.Net.Inner.Objects;
 using Roles;
+using Roles.Crew;
+using Roles.Evil;
+using Roles.Neutral;
 
 namespace RolesManager
 {
     public interface IManager
     {
-        void RegisterRole(GameCode code, Role toRegister);
-        void HandlePlayerChat(GameCode code, IPlayerChatEvent e);
-        void HandlePlayerExile(GameCode code, IPlayerExileEvent e);
-        void CleanUpRoles(GameCode code);
+        void RegisterRole(IInnerPlayerControl _player, RoleTypes playerRole);
+        void HandleEvent(IPlayerChatEvent e);
+        void HandleEvent(IPlayerExileEvent e);
+        void HandleEvent(IPlayerVotedEvent e);
     }
 
     public class Manager : IManager
     {
-        Dictionary<GameCode, HashSet<Role>> RegisteredRoles;
-
-        private bool playerKilledPlayer;
+        Dictionary<String, Role> RegisteredRoles;
 
         public Manager()
         {
-            RegisteredRoles = new Dictionary<GameCode, HashSet<Role>>();
-            playerKilledPlayer = false;
+            RegisteredRoles = new Dictionary<String, Role>();
         }
 
-        public void RegisterRole(GameCode code, Role toRegister)
+        public async void RegisterRole(IInnerPlayerControl player, RoleTypes playerRole)
         {
-            if (!RegisteredRoles.ContainsKey(code))
+            String roleMessage = "";
+            switch (playerRole)
             {
-                RegisteredRoles[code] = new HashSet<Role>();
+                case RoleTypes.Hitman:
+                    RegisteredRoles[player.PlayerInfo.PlayerName] = new Hitman(player);
+                    roleMessage = "You are a hitman. \nYou may silenty kill 1 player using /silentkill";
+                    break;
+                case RoleTypes.Jester:
+                    RegisteredRoles[player.PlayerInfo.PlayerName] = new Jester(player);
+                    roleMessage = "You are a jester. \nTrick the crew into voting you out to win";
+                    break;
+                case RoleTypes.Medium:
+                    RegisteredRoles[player.PlayerInfo.PlayerName] = new Medium(player);
+                    roleMessage = "You are a medium. \nYou can hear the dead speak";
+                    break;
+                case RoleTypes.Sheriff:
+                    RegisteredRoles[player.PlayerInfo.PlayerName] = new Sheriff(player);
+                    roleMessage = "You are a sheriff. \nYou may shoot 1 player that you suspect is an impostor, but if you guess wrong, you will also die";
+                    break;
+                case RoleTypes.VoodooLady:
+                    RegisteredRoles[player.PlayerInfo.PlayerName] = new VoodooLady(player);
+                    roleMessage = "You are a voodoo lady. Pick a kill word and target using /setkillword";
+                    break;
+                default:
+                    break;
             }
-            RegisteredRoles[code].Add(toRegister);
+            
+            var currentName = player.PlayerInfo.PlayerName;
+            var currentColor = player.PlayerInfo.ColorId;
+            await player.SetNameAsync("Server");
+            await player.SetColorAsync(Impostor.Api.Innersloth.Customization.ColorType.White);
+
+            await player.SendChatToPlayerAsync(roleMessage, player);
+
+            await player.SetNameAsync(currentName);
+            await player.SetColorAsync(currentColor);
         }
 
-        public void CleanUpRoles(GameCode code)
+        public async void HandleEvent(IPlayerChatEvent e)
         {
-            RegisteredRoles.Remove(code);
-        }
-
-        public async void HandlePlayerChat(GameCode code, IPlayerChatEvent e)
-        {
-            if (!RegisteredRoles.ContainsKey(code))
+            foreach(KeyValuePair<String, Role> player in RegisteredRoles)
             {
-                return;
-            }
-            foreach (var registered in RegisteredRoles[code])
-            {
-                if (registered._listeners.Contains(ListenerTypes.OnPlayerChat))
+                if (player.Value._listeners.Contains(ListenerTypes.OnPlayerChat))
                 {
-                    bool handleResp = await registered.HandlePlayerChat(e);
-                    if (registered.RoleType == RoleTypes.Sheriff || registered.RoleType == RoleTypes.Hitman)
-                    {
-                        if (handleResp)
-                        {
-                            playerKilledPlayer = true;
-                        }
-                    }
+                    //Change return type to keypair of player : action?
+                    await (player.Value.HandlePlayerChat(e));
                 }
             }
         }
 
-        public async void HandlePlayerExile(GameCode code, IPlayerExileEvent e)
+        public async void HandleEvent(IPlayerExileEvent e)
         {
-            if (!RegisteredRoles.ContainsKey(code))
+            foreach(KeyValuePair<String, Role> player in RegisteredRoles)
             {
-                return;
-            }
-            foreach (var registered in RegisteredRoles[code])
-            {
-                if (registered._listeners.Contains(ListenerTypes.OnPlayerExile))
+                if (player.Value._listeners.Contains(ListenerTypes.OnPlayerExile))
                 {
-                    if (registered.RoleType == RoleTypes.Jester && playerKilledPlayer)
-                    {
-                        continue;
-                    }
-                    await registered.HandlePlayerExile(e);
+                    await player.Value.HandlePlayerExile(e);
                 }
             }
-            playerKilledPlayer = false;
+        }
+
+        public async void HandleEvent(IPlayerVotedEvent e)
+        {
+            foreach(KeyValuePair<String, Role> player in RegisteredRoles)
+            {
+                if (player.Value._listeners.Contains(ListenerTypes.OnPlayerExile))
+                {
+                    await player.Value.HandlePlayerVote(e);
+                }
+            }
         }
     }
 }

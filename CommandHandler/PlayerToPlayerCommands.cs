@@ -28,7 +28,7 @@ namespace PlayerToPlayerCommands
         {
             var currentName = sender.PlayerInfo.PlayerName;
             await sender.SetNameAsync($"{currentName} (whispering)");
-            await sender.SendChatToPlayerAsync($"[ff0000ff]{message}[]", receiver);
+            await sender.SendChatToPlayerAsync(message, receiver);
             await sender.SetNameAsync(currentName);
         }
 

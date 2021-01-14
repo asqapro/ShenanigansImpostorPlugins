@@ -1,4 +1,7 @@
+using System;
 using System.Threading.Tasks;
+using System.Text.RegularExpressions;
+using System.Collections.Generic;
 using Impostor.Api.Events.Player;
 using Impostor.Api.Net.Inner.Objects;
 
@@ -11,7 +14,6 @@ namespace Roles.Neutral
         public Jester(IInnerPlayerControl player) : base(player)
         {
             _listeners.Add(ListenerTypes.OnPlayerExile);
-            TotalAllowed = 1;
             RoleType = RoleTypes.Jester;
         }
 
@@ -19,22 +21,21 @@ namespace Roles.Neutral
         {
             var playerName = _player.PlayerInfo.PlayerName;
             var playerColor = _player.PlayerInfo.ColorId;
-            if (e.PlayerControl.PlayerInfo.PlayerName == _player.PlayerInfo.PlayerName)
+            if (e.PlayerControl.PlayerInfo.PlayerName == playerName)
             {
                 foreach (var player in e.Game.Players)
                 {
-                    if (player.Character != _player)
+                    if (player.Character.PlayerInfo.PlayerName != playerName)
                     {
                         var currentName = player.Character.PlayerInfo.PlayerName;
                         var currentColor = player.Character.PlayerInfo.ColorId;
                         await player.Character.SetNameAsync($"{playerName} (Jester)");
-                        await player.Character.SetColorAsync(currentColor);
+                        await player.Character.SetColorAsync(playerColor);
                         await player.Character.SendChatToPlayerAsync("The jester has won!", player.Character);
                         await player.Character.SetNameAsync(currentName);
                         await player.Character.SetColorAsync(currentColor);
                     }
                 }
-                return true;
             }
             return false;
         }

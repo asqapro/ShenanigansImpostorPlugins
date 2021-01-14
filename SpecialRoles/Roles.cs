@@ -20,6 +20,7 @@ namespace Roles
     {
         OnPlayerChat,
         OnPlayerExile,
+        OnPlayerVoted
     }
 
     public abstract class Role
@@ -41,6 +42,11 @@ namespace Roles
         }
 
         public virtual ValueTask<bool> HandlePlayerExile(IPlayerExileEvent e)
+        {
+            return ValueTask.FromResult(false);
+        }
+
+        public virtual ValueTask<bool> HandlePlayerVote(IPlayerVotedEvent e)
         {
             return ValueTask.FromResult(false);
         }
