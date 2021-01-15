@@ -8,4 +8,8 @@
     <PackageReference Include="Impostor.Api" Version="1.2.2-ci.121" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\Impostor\src\Impostor.Api\Impostor.Api.csproj" />
+  </ItemGroup>
+
 </Project>

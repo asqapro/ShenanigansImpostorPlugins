@@ -73,7 +73,7 @@ namespace Impostor.Plugins.Commands.Handlers
                 }
                 else if (parsedCommand.Validation == ValidateResult.DoesNotExist)
                 {
-                    response = "Command does not exist";
+                    return;
                 }
                 else if (parsedCommand.Validation == ValidateResult.MissingTarget)
                 {

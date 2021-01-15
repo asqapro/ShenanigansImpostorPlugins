@@ -127,7 +127,8 @@ namespace CommandHandler
 
             parsed.CommandName = commandName;
             parsed.Target = match.Groups[2].Value.Trim();
-            parsed.Options = match.Groups[3].Value.Trim();
+            char[] toTrim = {' ', '\''};
+            parsed.Options = match.Groups[3].Value.Trim(toTrim);
             parsed.Help = managers[commandName].Help;
 
             return parsed;

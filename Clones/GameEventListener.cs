@@ -1,12 +1,8 @@
 ﻿using Impostor.Api.Events;
 using Impostor.Api.Events.Player;
-using Impostor.Api.Net.Inner.Objects;
 using Impostor.Api.Games;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Timers;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Impostor.Plugins.Clones.Handlers
 {
@@ -19,9 +15,6 @@ namespace Impostor.Plugins.Clones.Handlers
             _logger = logger;
         }
 
-        private Api.Net.IClientPlayer bombPlayer;
-        private bool bombPlayerSet = false;
-        private Api.Net.IClientPlayer imp;
         private IGame g;
 
         [EventListener]
@@ -36,15 +29,6 @@ namespace Impostor.Plugins.Clones.Handlers
             int rdMum;
             foreach (var player in e.Game.Players)
             {
-                if (player.Character.PlayerInfo.IsImpostor)
-                {
-                    imp = player;
-                }
-                else if (!bombPlayerSet)
-                {
-                    bombPlayer = player;
-                    bombPlayerSet = true;
-                }
                 rdMum = rd.Next(0, 1);
                 var info = player.Character.PlayerInfo;
                 var playerEdit = player.Character;
@@ -67,8 +51,6 @@ namespace Impostor.Plugins.Clones.Handlers
                     cloneBCount++;
                 }
             }
-
-
         }
 
         [EventListener]
