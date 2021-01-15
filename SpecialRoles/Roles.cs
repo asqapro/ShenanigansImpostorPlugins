@@ -16,7 +16,10 @@ namespace Roles
         Jester,
         Hitman,
         VoodooLady,
-        Cop
+        Cop,
+        InsaneCop,
+        ConfusedCop,
+        Oracle
     }
 
     public enum ListenerTypes
@@ -24,7 +27,8 @@ namespace Roles
         OnPlayerChat,
         OnPlayerExile,
         OnPlayerVoted,
-        OnMeetingEnded
+        OnMeetingEnded,
+        OnPlayerMurder
     }
 
     public enum ResultTypes
@@ -64,6 +68,11 @@ namespace Roles
         }
 
         public virtual ValueTask<Tuple<String, ResultTypes>> HandleMeetingEnd(IMeetingEndedEvent e)
+        {
+            return ValueTask.FromResult(new Tuple<String, ResultTypes>("", ResultTypes.NoAction));
+        }
+
+        public virtual ValueTask<Tuple<String, ResultTypes>> HandlePlayerMurder(IPlayerMurderEvent e)
         {
             return ValueTask.FromResult(new Tuple<String, ResultTypes>("", ResultTypes.NoAction));
         }

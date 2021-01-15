@@ -17,6 +17,7 @@ namespace Managers.Roles
         void HandleEvent(IPlayerExileEvent e);
         void HandleEvent(IPlayerVotedEvent e);
         void HandleEvent(IMeetingEndedEvent e);
+        void HandleEvent(IPlayerMurderEvent e);
     }
 
     public class RolesManager : IRolesManager
@@ -56,6 +57,18 @@ namespace Managers.Roles
                 case RoleTypes.Cop:
                     RegisteredRoles[player.PlayerInfo.PlayerName] = new Cop(player);
                     roleMessage = "You are a cop. \nYou can find impostors by using /investigate on players";
+                    break;
+                case RoleTypes.InsaneCop:
+                    RegisteredRoles[player.PlayerInfo.PlayerName] = new InsaneCop(player);
+                    roleMessage = "You are a cop. \nYou can find impostors by using /investigate on players";
+                    break;
+                case RoleTypes.ConfusedCop:
+                    RegisteredRoles[player.PlayerInfo.PlayerName] = new ConfusedCop(player);
+                    roleMessage = "You are a cop. \nYou can find impostors by using /investigate on players";
+                    break;
+                case RoleTypes.Oracle:
+                    RegisteredRoles[player.PlayerInfo.PlayerName] = new Oracle(player);
+                    roleMessage = "You are an oracle. \nWhen you die, you will reveal the role of the last player you picked using /reveal";
                     break;
                 default:
                     break;
@@ -124,6 +137,21 @@ namespace Managers.Roles
                 if (player.Value._listeners.Contains(ListenerTypes.OnMeetingEnded))
                 {
                     Tuple<String, ResultTypes> handlerResult = await (player.Value.HandleMeetingEnd(e));
+                    if (handlerResult.Item2 == ResultTypes.KilledPlayer)
+                    {
+                        
+                    }
+                }
+            }
+        }
+
+        public async void HandleEvent(IPlayerMurderEvent e)
+        {
+            foreach(KeyValuePair<String, Role> player in RegisteredRoles)
+            {
+                if (player.Value._listeners.Contains(ListenerTypes.OnPlayerMurder))
+                {
+                    Tuple<String, ResultTypes> handlerResult = await (player.Value.HandlePlayerMurder(e));
                     if (handlerResult.Item2 == ResultTypes.KilledPlayer)
                     {
                         

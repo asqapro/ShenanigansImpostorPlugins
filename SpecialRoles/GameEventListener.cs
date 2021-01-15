@@ -65,7 +65,7 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
                 }
                 else
                 {
-                    switch (rng.Next(4, 5))
+                    switch (rng.Next(1, 10))
                     {
                         case 1:
                         {
@@ -83,7 +83,19 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
                             break;
                         case 4:
                             _manager[e.Game.Code].RegisterRole(player.Character, RoleTypes.Cop);
-                            _logger.LogInformation($"{info.PlayerName} is cop");
+                            _logger.LogInformation($"{info.PlayerName} is a cop");
+                            break;
+                        case 5:
+                            _manager[e.Game.Code].RegisterRole(player.Character, RoleTypes.InsaneCop);
+                            _logger.LogInformation($"{info.PlayerName} is an insane cop");
+                            break;
+                        case 6:
+                            _manager[e.Game.Code].RegisterRole(player.Character, RoleTypes.ConfusedCop);
+                            _logger.LogInformation($"{info.PlayerName} is a confused cop");
+                            break;
+                        case 7:
+                            _manager[e.Game.Code].RegisterRole(player.Character, RoleTypes.Oracle);
+                            _logger.LogInformation($"{info.PlayerName} is an oracle");
                             break;
                         default:
                             _logger.LogInformation($"{info.PlayerName} is a crewmate");
