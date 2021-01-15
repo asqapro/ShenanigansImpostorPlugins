@@ -373,7 +373,7 @@ namespace Roles.Crew
 
         public override async ValueTask<Tuple<String, ResultTypes>> HandlePlayerMurder(IPlayerMurderEvent e)
         {
-            if (e.PlayerControl.PlayerInfo.PlayerName == _player.PlayerInfo.PlayerName && toReveal != null)
+            if (e.Victim.PlayerInfo.PlayerName == _player.PlayerInfo.PlayerName && toReveal != null)
             {
                 await revealOnDeath(e.Game.Players);
             }

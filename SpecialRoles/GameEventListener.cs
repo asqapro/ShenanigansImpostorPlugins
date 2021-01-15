@@ -139,5 +139,11 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
         {
             _manager[e.Game.Code].HandleEvent(e);
         }
+
+        [EventListener]
+        public void OnPlayerMurder(IPlayerMurderEvent e)
+        {
+            _manager[e.Game.Code].HandleEvent(e);
+        }
     }
 }
