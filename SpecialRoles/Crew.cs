@@ -2,8 +2,8 @@ using System;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 using Impostor.Api.Events.Player;
+using Impostor.Api.Events.Meeting;
 using Impostor.Api.Net.Inner.Objects;
-using PlayerWrapper;
 
 namespace Roles.Crew
 {
@@ -98,7 +98,7 @@ namespace Roles.Crew
             {
                 String commandParsePattern = @"/shoot ((?:\w\s?)+)";
                 var parsedCommand = Regex.Match(e.Message, commandParsePattern);
-                if (parsedCommand.Success)
+                if (parsedCommand.Success && !_player.PlayerInfo.IsDead)
                 {
                     foreach (var player in e.Game.Players)
                     {
@@ -111,6 +111,61 @@ namespace Roles.Crew
                 }
             }
             return new Tuple<String, ResultTypes>("", ResultTypes.NoAction);
+        }
+    }
+
+    public class Cop : Role
+    {
+        private bool usedInvestigate;
+        public new static int TotalAllowed = 1;
+
+        public Cop(IInnerPlayerControl player) : base(player)
+        {
+            _listeners.Add(ListenerTypes.OnPlayerChat);
+            RoleType = RoleTypes.Cop;
+            usedInvestigate = false;
+        }
+
+        public override async ValueTask<Tuple<String, ResultTypes>> HandlePlayerChat(IPlayerChatEvent e)
+        {
+            if (e.Message.StartsWith("/") && e.PlayerControl.PlayerInfo.PlayerName == _player.PlayerInfo.PlayerName)
+            {
+                String commandParsePattern = @"/investigate ((?:\w\s?)+)";
+                var parsedCommand = Regex.Match(e.Message, commandParsePattern);
+                if (parsedCommand.Success && !_player.PlayerInfo.IsDead)
+                {
+                    if (!usedInvestigate)
+                    {
+                        foreach (var player in e.Game.Players)
+                        {
+                            if (player.Character.PlayerInfo.PlayerName == parsedCommand.Groups[1].Value)
+                            {
+                                if (player.Character.PlayerInfo.IsImpostor)
+                                {
+                                    await _player.SendChatToPlayerAsync($"{player.Character.PlayerInfo.PlayerName} is an impostor");
+                                }
+                                else
+                                {
+                                    await _player.SendChatToPlayerAsync($"{player.Character.PlayerInfo.PlayerName} is a crewmate");
+                                }
+                                break;
+                            }
+                        }
+                        usedInvestigate = true;
+                    }
+                    else
+                    {
+                        await _player.SendChatToPlayerAsync("You may only investigate 1 player every meeting");
+                    }
+                }
+            }
+            return new Tuple<String, ResultTypes>("", ResultTypes.NoAction);
+        }
+
+        public override ValueTask<Tuple<String, ResultTypes>> HandleMeetingEnd(IMeetingEndedEvent e)
+        {
+            usedInvestigate = false;
+            return ValueTask.FromResult(new Tuple<String, ResultTypes>("", ResultTypes.NoAction));
         }
     }
 }

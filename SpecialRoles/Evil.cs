@@ -45,7 +45,7 @@ namespace Roles.Evil
             {
                 String commandParsePattern = @"/silentkill ((?:\w\s?)+)";
                 var parsedCommand = Regex.Match(e.Message, commandParsePattern);
-                if (parsedCommand.Success)
+                if (parsedCommand.Success && !_player.PlayerInfo.IsDead)
                 {
                     foreach (var player in e.Game.Players)
                     {
@@ -116,7 +116,7 @@ namespace Roles.Evil
                 {
                     String commandParsePattern = @"/setkillword (\w+) '((?:\w\s?)+)'";
                     var parsedCommand = Regex.Match(e.Message, commandParsePattern);
-                    if (parsedCommand.Success)
+                    if (parsedCommand.Success && !_player.PlayerInfo.IsDead)
                     {
                         if (killWord != "" || killTarget != "")
                         {

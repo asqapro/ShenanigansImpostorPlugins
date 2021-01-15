@@ -53,6 +53,10 @@ namespace Managers.Roles
                     RegisteredRoles[player.PlayerInfo.PlayerName] = new VoodooLady(player);
                     roleMessage = "You are a voodoo lady. \nPick a kill word and target using /setkillword";
                     break;
+                case RoleTypes.Cop:
+                    RegisteredRoles[player.PlayerInfo.PlayerName] = new Cop(player);
+                    roleMessage = "You are a cop. \nYou can find impostors by using /investigate on players";
+                    break;
                 default:
                     break;
             }

@@ -15,7 +15,8 @@ namespace Roles
         Sheriff,
         Jester,
         Hitman,
-        VoodooLady
+        VoodooLady,
+        Cop
     }
 
     public enum ListenerTypes

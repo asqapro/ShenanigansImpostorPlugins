@@ -48,7 +48,7 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
                 Random rng = new Random();
                 if (isImpostor)
                 {
-                    switch (rng.Next(1, 3))
+                    switch (rng.Next(1, 15))
                     {
                         case 1:
                             _manager[e.Game.Code].RegisterRole(player.Character, RoleTypes.Hitman);
@@ -65,7 +65,7 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
                 }
                 else
                 {
-                    switch (rng.Next(1, 4))
+                    switch (rng.Next(4, 5))
                     {
                         case 1:
                         {
@@ -80,6 +80,10 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
                         case 3:
                             _manager[e.Game.Code].RegisterRole(player.Character, RoleTypes.Jester);
                             _logger.LogInformation($"{info.PlayerName} is a jester");
+                            break;
+                        case 4:
+                            _manager[e.Game.Code].RegisterRole(player.Character, RoleTypes.Cop);
+                            _logger.LogInformation($"{info.PlayerName} is cop");
                             break;
                         default:
                             _logger.LogInformation($"{info.PlayerName} is a crewmate");
