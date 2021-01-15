@@ -102,7 +102,7 @@ namespace Managers.Roles
         {
             foreach(KeyValuePair<String, Role> player in RegisteredRoles)
             {
-                if (player.Value._listeners.Contains(ListenerTypes.OnPlayerExile))
+                if (player.Value._listeners.Contains(ListenerTypes.OnPlayerVoted))
                 {
                     Tuple<String, ResultTypes> handlerResult = await (player.Value.HandlePlayerVote(e));
                     if (handlerResult.Item2 == ResultTypes.KilledPlayer)

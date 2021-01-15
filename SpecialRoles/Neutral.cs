@@ -48,7 +48,7 @@ namespace Roles.Neutral
 
         public override async ValueTask<Tuple<String, ResultTypes>> HandleMeetingEnd(IMeetingEndedEvent e)
         {
-            var jesterVoted = false;
+            var jesterVoted = true;
             if (votedJesterCount > votedSkipCount)
             {
                 foreach (var voteCount in votedOtherCount)
@@ -59,6 +59,10 @@ namespace Roles.Neutral
                     }
                     votedOtherCount[voteCount.Key] = 0;
                 }
+            }
+            if (votedSkipCount > votedJesterCount)
+            {
+                jesterVoted = false;
             }
             if (jesterVoted)
             {
