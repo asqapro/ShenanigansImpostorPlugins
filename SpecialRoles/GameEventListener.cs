@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using Impostor.Api.Events;
 using Impostor.Api.Events.Player;
+using Impostor.Api.Events.Meeting;
 using Impostor.Api.Games;
 using Microsoft.Extensions.Logging;
-using RolesManager;
+using Managers.Roles;
 using Roles;
 
 namespace Impostor.Plugins.SpecialRoles.Handlers
@@ -18,12 +19,12 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
     public class GameEventListener : IEventListener
     {
         private readonly ILogger<SpecialRoles> _logger;
-        private Dictionary<GameCode, IManager> _manager;
+        private Dictionary<GameCode, IRolesManager> _manager;
 
         public GameEventListener(ILogger<SpecialRoles> logger)
         {
             _logger = logger;
-            _manager = new Dictionary<GameCode, IManager>();
+            _manager = new Dictionary<GameCode, IRolesManager>();
         }
 
         /// <summary>
@@ -37,7 +38,7 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
         {
             _logger.LogInformation($"Game is starting.");
 
-            _manager[e.Game.Code] = new Manager();
+            _manager[e.Game.Code] = new RolesManager();
 
             // This prints out for all players if they are impostor or crewmate.
             foreach (var player in e.Game.Players)
@@ -113,6 +114,12 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
 
         [EventListener]
         public void OnPlayerVoted(IPlayerVotedEvent e)
+        {
+            _manager[e.Game.Code].HandleEvent(e);
+        }
+
+        [EventListener]
+        public void OnMeetingEnded(IMeetingEndedEvent e)
         {
             _manager[e.Game.Code].HandleEvent(e);
         }

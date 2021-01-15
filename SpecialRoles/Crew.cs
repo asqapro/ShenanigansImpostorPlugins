@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 using Impostor.Api.Events.Player;
 using Impostor.Api.Net.Inner.Objects;
+using PlayerWrapper;
 
 namespace Roles.Crew
 {
@@ -32,7 +33,7 @@ namespace Roles.Crew
             await aliveSender.SetColorAsync(currentColor);
         }
 
-        public override async ValueTask<bool> HandlePlayerChat(IPlayerChatEvent e)
+        public override async ValueTask<Tuple<String, ResultTypes>> HandlePlayerChat(IPlayerChatEvent e)
         {
             if (e.PlayerControl.PlayerInfo.IsDead)
             {
@@ -44,9 +45,8 @@ namespace Roles.Crew
                         break;
                     }
                 }
-                return true;
             }
-            return false;
+            return new Tuple<String, ResultTypes>("", ResultTypes.NoAction);
         }
     }
 
@@ -78,6 +78,11 @@ namespace Roles.Crew
 
         private async ValueTask shootPlayer(IInnerPlayerControl toShoot)
         {
+            if (ammo < 1)
+            {
+                await lawResponse("You have no bullets left");
+                return;
+            }
             await toShoot.SetExiledAsync();
             ammo--;
             if (!toShoot.PlayerInfo.IsImpostor)
@@ -87,7 +92,7 @@ namespace Roles.Crew
             }
         }
 
-        public override async ValueTask<bool> HandlePlayerChat(IPlayerChatEvent e)
+        public override async ValueTask<Tuple<String, ResultTypes>> HandlePlayerChat(IPlayerChatEvent e)
         {
             if (e.Message.StartsWith("/") && e.PlayerControl.PlayerInfo.PlayerName == _player.PlayerInfo.PlayerName)
             {
@@ -99,21 +104,13 @@ namespace Roles.Crew
                     {
                         if (player.Character.PlayerInfo.PlayerName == parsedCommand.Groups[1].Value)
                         {
-                            if (ammo > 0)
-                            {
-                                await shootPlayer(player.Character);
-                                return true;
-                            }
-                            else
-                            {
-                                await lawResponse("You have no bullets left");
-                            }
-                            break;
+                            await shootPlayer(player.Character);
+                            return new Tuple<String, ResultTypes>(player.Character.PlayerInfo.PlayerName, ResultTypes.KilledPlayer);
                         }
                     }
                 }
             }
-            return false;
+            return new Tuple<String, ResultTypes>("", ResultTypes.NoAction);
         }
     }
 }

@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Impostor.Api.Events.Player;
+using Impostor.Api.Events.Meeting;
 using Impostor.Api.Net.Inner.Objects;
 
 namespace Roles
@@ -20,7 +22,14 @@ namespace Roles
     {
         OnPlayerChat,
         OnPlayerExile,
-        OnPlayerVoted
+        OnPlayerVoted,
+        OnMeetingEnded
+    }
+
+    public enum ResultTypes
+    {
+        NoAction,
+        KilledPlayer
     }
 
     public abstract class Role
@@ -30,25 +39,32 @@ namespace Roles
         public static int TotalAllowed {get; set;}
         public RoleTypes RoleType {get; set;}
 
+        public Tuple<String, ResultTypes> HandlerResult;
+
         public Role(IInnerPlayerControl player)
         {
             _player = player;
             _listeners = new HashSet<ListenerTypes>();
         }
 
-        public virtual ValueTask<bool> HandlePlayerChat(IPlayerChatEvent e)
+        public virtual ValueTask<Tuple<String, ResultTypes>> HandlePlayerChat(IPlayerChatEvent e)
         {
-            return ValueTask.FromResult(false);
+            return ValueTask.FromResult(new Tuple<String, ResultTypes>("", ResultTypes.NoAction));
         }
 
-        public virtual ValueTask<bool> HandlePlayerExile(IPlayerExileEvent e)
+        public virtual ValueTask<Tuple<String, ResultTypes>> HandlePlayerExile(IPlayerExileEvent e)
         {
-            return ValueTask.FromResult(false);
+            return ValueTask.FromResult(new Tuple<String, ResultTypes>("", ResultTypes.NoAction));
         }
 
-        public virtual ValueTask<bool> HandlePlayerVote(IPlayerVotedEvent e)
+        public virtual ValueTask<Tuple<String, ResultTypes>> HandlePlayerVote(IPlayerVotedEvent e)
         {
-            return ValueTask.FromResult(false);
+            return ValueTask.FromResult(new Tuple<String, ResultTypes>("", ResultTypes.NoAction));
+        }
+
+        public virtual ValueTask<Tuple<String, ResultTypes>> HandleMeetingEnd(IMeetingEndedEvent e)
+        {
+            return ValueTask.FromResult(new Tuple<String, ResultTypes>("", ResultTypes.NoAction));
         }
     }
 }

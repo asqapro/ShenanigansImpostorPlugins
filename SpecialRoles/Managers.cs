@@ -1,27 +1,29 @@
 using System;
 using System.Collections.Generic;
 using Impostor.Api.Events.Player;
+using Impostor.Api.Events.Meeting;
 using Impostor.Api.Net.Inner.Objects;
 using Roles;
 using Roles.Crew;
 using Roles.Evil;
 using Roles.Neutral;
 
-namespace RolesManager
+namespace Managers.Roles
 {
-    public interface IManager
+    public interface IRolesManager
     {
         void RegisterRole(IInnerPlayerControl _player, RoleTypes playerRole);
         void HandleEvent(IPlayerChatEvent e);
         void HandleEvent(IPlayerExileEvent e);
         void HandleEvent(IPlayerVotedEvent e);
+        void HandleEvent(IMeetingEndedEvent e);
     }
 
-    public class Manager : IManager
+    public class RolesManager : IRolesManager
     {
         Dictionary<String, Role> RegisteredRoles;
 
-        public Manager()
+        public RolesManager()
         {
             RegisteredRoles = new Dictionary<String, Role>();
         }
@@ -72,8 +74,11 @@ namespace RolesManager
             {
                 if (player.Value._listeners.Contains(ListenerTypes.OnPlayerChat))
                 {
-                    //Change return type to keypair of player : action?
-                    await (player.Value.HandlePlayerChat(e));
+                    Tuple<String, ResultTypes> handlerResult = await (player.Value.HandlePlayerChat(e));
+                    if (handlerResult.Item2 == ResultTypes.KilledPlayer)
+                    {
+
+                    }
                 }
             }
         }
@@ -84,7 +89,11 @@ namespace RolesManager
             {
                 if (player.Value._listeners.Contains(ListenerTypes.OnPlayerExile))
                 {
-                    await player.Value.HandlePlayerExile(e);
+                    Tuple<String, ResultTypes> handlerResult = await (player.Value.HandlePlayerExile(e));
+                    if (handlerResult.Item2 == ResultTypes.KilledPlayer)
+                    {
+                        
+                    }
                 }
             }
         }
@@ -95,7 +104,26 @@ namespace RolesManager
             {
                 if (player.Value._listeners.Contains(ListenerTypes.OnPlayerExile))
                 {
-                    await player.Value.HandlePlayerVote(e);
+                    Tuple<String, ResultTypes> handlerResult = await (player.Value.HandlePlayerVote(e));
+                    if (handlerResult.Item2 == ResultTypes.KilledPlayer)
+                    {
+                        
+                    }
+                }
+            }
+        }
+
+        public async void HandleEvent(IMeetingEndedEvent e)
+        {
+            foreach(KeyValuePair<String, Role> player in RegisteredRoles)
+            {
+                if (player.Value._listeners.Contains(ListenerTypes.OnMeetingEnded))
+                {
+                    Tuple<String, ResultTypes> handlerResult = await (player.Value.HandleMeetingEnd(e));
+                    if (handlerResult.Item2 == ResultTypes.KilledPlayer)
+                    {
+                        
+                    }
                 }
             }
         }
