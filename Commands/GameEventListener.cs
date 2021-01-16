@@ -137,7 +137,7 @@ namespace Impostor.Plugins.Commands.Handlers
                     {
                         if (player.Character.PlayerInfo.PlayerName == commandPieces[1])
                         {
-                            await player.Character.SetExiledAsync(player);
+                            await player.Character.SetExiledAsync();
                         }
                     }
                 }

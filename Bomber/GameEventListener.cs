@@ -33,7 +33,7 @@ namespace Impostor.Plugins.Bomber.Handlers
             {
                 if(x.Value.Equals(timer))
                 {
-                    x.Key.Character.SetExiledAsync(x.Key);
+                    x.Key.Character.SetExiledAsync();
                 }
             }  
         }
@@ -53,7 +53,7 @@ namespace Impostor.Plugins.Bomber.Handlers
             //start timers for 25 seconds
             bombMap.Add(player, new Timer());
             bombMap.GetValueOrDefault(player).Elapsed += bombGoBoom;
-            bombMap.GetValueOrDefault(player).Interval = 2500;
+            bombMap.GetValueOrDefault(player).Interval = 25000;
             bombMap.GetValueOrDefault(player).Start();
         }
 
@@ -68,7 +68,7 @@ namespace Impostor.Plugins.Bomber.Handlers
                     if(!task.Complete)
                     {
                         //set timer to 20 seconds and restart
-                        bombMap.GetValueOrDefault(e.ClientPlayer).Interval = 2000;
+                        bombMap.GetValueOrDefault(e.ClientPlayer).Interval = 20000;
                         bombMap.GetValueOrDefault(e.ClientPlayer).Start();
                         return;
                     }
