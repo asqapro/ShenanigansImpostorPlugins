@@ -126,7 +126,7 @@ namespace Impostor.Plugins.Infected.Handlers
         [EventListener]
         public void OnPlayerMovement(IPlayerMovementEvent e)
         {
-            if (e.PlayerControl == null)
+            if (e.PlayerControl == null || e.ClientPlayer == null)
             {
                 return;
             }
