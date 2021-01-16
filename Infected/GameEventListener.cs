@@ -5,7 +5,7 @@ using Impostor.Api.Games;
 using Impostor.Api.Events;
 using Impostor.Api.Events.Player;
 using Impostor.Api.Net;
-using Impostor.Api.Net.Inner.Objects;
+using Impostor.Api.Innersloth;
 using Microsoft.Extensions.Logging;
 
 
@@ -15,6 +15,7 @@ namespace Impostor.Plugins.Infected.Handlers
     {
         private readonly ILogger<Infected> _logger;
         private Dictionary<GameCode, HashSet<IClientPlayer>> infected;
+        private GameOptionsData preEditOptions;
 
         public GameEventListener(ILogger<Infected> logger)
         {
@@ -43,6 +44,8 @@ namespace Impostor.Plugins.Infected.Handlers
             _logger.LogInformation($"Game is starting.");
 
             infected[e.Game.Code] = new HashSet<IClientPlayer>();
+
+            preEditOptions = e.Game.Options;
 
             e.Game.Options.ImpostorLightMod = 1.0f;
             e.Game.Options.CrewLightMod = 1.0f;
@@ -80,7 +83,11 @@ namespace Impostor.Plugins.Infected.Handlers
                     player.Character.SetSkinAsync(origPlayerInfo.Character.PlayerInfo.SkinId);
                 }
             }
-
+            e.Game.Options.ImpostorLightMod = preEditOptions.ImpostorLightMod;
+            e.Game.Options.CrewLightMod = preEditOptions.CrewLightMod;
+            e.Game.Options.KillCooldown = preEditOptions.KillCooldown;
+            e.Game.Options.PlayerSpeedMod = preEditOptions.PlayerSpeedMod;
+            e.Game.SyncSettingsAsync();
         }
 
         [EventListener]
