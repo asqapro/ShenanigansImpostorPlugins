@@ -1,5 +1,7 @@
 ﻿using System;
+using System.IO;
 using System.Numerics;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 using Impostor.Api.Games;
 using Impostor.Api.Events;
@@ -15,12 +17,14 @@ namespace Impostor.Plugins.Infected.Handlers
     {
         private readonly ILogger<Infected> _logger;
         private Dictionary<GameCode, HashSet<IClientPlayer>> infected;
-        private GameOptionsData preEditOptions;
+        private Dictionary<GameCode, MemoryStream> preEditOptionsStream;
+        private BinaryWriter preEditOptionsWriter;
 
         public GameEventListener(ILogger<Infected> logger)
         {
             _logger = logger;
             infected = new Dictionary<GameCode, HashSet<IClientPlayer>>();
+            preEditOptionsStream = new Dictionary<GameCode, MemoryStream>();
         }
 
         private void setInfected(IClientPlayer toInfect, IGame game)
@@ -39,13 +43,28 @@ namespace Impostor.Plugins.Infected.Handlers
         }
 
         [EventListener]
+        public void OnPlayerSpawned(IPlayerSpawnedEvent e)
+        {
+            if (e.ClientPlayer.IsHost && preEditOptionsStream.ContainsKey(e.Game.Code))
+            {
+                byte[] gameOptions = preEditOptionsStream[e.Game.Code].GetBuffer();
+                var memory = new ReadOnlyMemory<byte>(gameOptions);
+
+                e.Game.Options.Deserialize(memory);
+                e.Game.SyncSettingsAsync();
+            }
+        }
+
+        [EventListener]
         public void OnGameStarted(IGameStartedEvent e)
         {
             _logger.LogInformation($"Game is starting.");
 
             infected[e.Game.Code] = new HashSet<IClientPlayer>();
 
-            preEditOptions = e.Game.Options;
+            preEditOptionsStream[e.Game.Code] = new MemoryStream();
+            preEditOptionsWriter = new BinaryWriter(preEditOptionsStream[e.Game.Code]);
+            e.Game.Options.Serialize(preEditOptionsWriter, GameOptionsData.LatestVersion);
 
             e.Game.Options.ImpostorLightMod = 1.0f;
             e.Game.Options.CrewLightMod = 1.0f;
@@ -68,7 +87,7 @@ namespace Impostor.Plugins.Infected.Handlers
         }
 
         [EventListener]
-        public void OnGameEnded(IGameEndedEvent e)
+        public async ValueTask OnGameEnded(IGameEndedEvent e)
         {
             _logger.LogInformation($"Game has ended.");
             foreach (var player in e.Game.Players)
@@ -77,17 +96,19 @@ namespace Impostor.Plugins.Infected.Handlers
                 infected[e.Game.Code].TryGetValue(player, out origPlayerInfo);
                 if (origPlayerInfo != null)
                 {
-                    player.Character.SetNameAsync(origPlayerInfo.Character.PlayerInfo.PlayerName);
-                    player.Character.SetHatAsync(origPlayerInfo.Character.PlayerInfo.HatId);
-                    player.Character.SetColorAsync(origPlayerInfo.Character.PlayerInfo.ColorId);
-                    player.Character.SetSkinAsync(origPlayerInfo.Character.PlayerInfo.SkinId);
+                    await player.Character.SetNameAsync(origPlayerInfo.Character.PlayerInfo.PlayerName);
+                    await player.Character.SetHatAsync(origPlayerInfo.Character.PlayerInfo.HatId);
+                    await player.Character.SetColorAsync(origPlayerInfo.Character.PlayerInfo.ColorId);
+                    await player.Character.SetSkinAsync(origPlayerInfo.Character.PlayerInfo.SkinId);
                 }
             }
-            e.Game.Options.ImpostorLightMod = preEditOptions.ImpostorLightMod;
-            e.Game.Options.CrewLightMod = preEditOptions.CrewLightMod;
-            e.Game.Options.KillCooldown = preEditOptions.KillCooldown;
-            e.Game.Options.PlayerSpeedMod = preEditOptions.PlayerSpeedMod;
-            e.Game.SyncSettingsAsync();
+            infected.Remove(e.Game.Code);
+        }
+
+        [EventListener]
+        public void OnGameDestroyed(IGameDestroyedEvent e)
+        {
+            preEditOptionsStream.Remove(e.Game.Code);
         }
 
         [EventListener]
@@ -105,6 +126,14 @@ namespace Impostor.Plugins.Infected.Handlers
         [EventListener]
         public void OnPlayerMovement(IPlayerMovementEvent e)
         {
+            if (e.PlayerControl == null)
+            {
+                return;
+            }
+            if (!infected.ContainsKey(e.Game.Code))
+            {
+                return;
+            }
             foreach (var player in e.Game.Players)
             {
                 if (player == null)
@@ -118,11 +147,11 @@ namespace Impostor.Plugins.Infected.Handlers
                 var distance = Vector2.Distance(e.PlayerControl.NetworkTransform.Position, player.Character.NetworkTransform.Position);
                 if (distance < 0.6)
                 {
-                    if (!infected[e.Game.Code].Contains(e.ClientPlayer))
+                    if (!infected[e.Game.Code].Contains(e.ClientPlayer) && infected[e.Game.Code].Contains(player.Client.Player))
                     {
                         setInfected(e.ClientPlayer, e.Game);
                     }
-                    if (!infected[e.Game.Code].Contains(player))
+                    if (!infected[e.Game.Code].Contains(player) && infected[e.Game.Code].Contains(e.ClientPlayer))
                     {
                         setInfected(player.Client.Player, e.Game);
                     }

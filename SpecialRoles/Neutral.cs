@@ -26,6 +26,10 @@ namespace Roles.Neutral
 
         public override ValueTask<Tuple<String, ResultTypes>> HandlePlayerVote(IPlayerVotedEvent e)
         {
+            if (e == null)
+            {
+                return ValueTask.FromResult(new Tuple<String, ResultTypes>("", ResultTypes.NoAction));
+            }
             if (e.VotedFor.PlayerInfo.PlayerName == _player.PlayerInfo.PlayerName)
             {
                 votedJesterCount++;

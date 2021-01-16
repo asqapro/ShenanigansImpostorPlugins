@@ -18,10 +18,10 @@ namespace PlayerToPlayerCommands
         {
             HasTarget = true;
             HasOptions = true;
-            Help = "/whisper <target> '<Message>'";
+            Help = "/w <target> '<Message>'";
             HostOnly = false;
             Enabled = true;
-            Name = "/whisper";
+            Name = "/w";
         }
 
         private async ValueTask sendWhisper(IInnerPlayerControl sender, IInnerPlayerControl receiver, String message)

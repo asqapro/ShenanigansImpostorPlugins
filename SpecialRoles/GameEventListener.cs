@@ -116,8 +116,10 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
         public void OnPlayerChat(IPlayerChatEvent e)
         {
             _logger.LogInformation($"{e.PlayerControl.PlayerInfo.PlayerName} said {e.Message}");
-
-            _manager[e.Game.Code].HandleEvent(e);
+            if (_manager.ContainsKey(e.Game.Code))
+            {
+                _manager[e.Game.Code].HandleEvent(e);
+            }
         }
 
         [EventListener]
@@ -125,25 +127,37 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
         {
             _logger.LogInformation($"{e.PlayerControl.PlayerInfo.PlayerName} was exiled");
             
-            _manager[e.Game.Code].HandleEvent(e);
+            if (_manager.ContainsKey(e.Game.Code))
+            {
+                _manager[e.Game.Code].HandleEvent(e);
+            }
         }
 
         [EventListener]
         public void OnPlayerVoted(IPlayerVotedEvent e)
         {
-            _manager[e.Game.Code].HandleEvent(e);
+            if (_manager.ContainsKey(e.Game.Code))
+            {
+                _manager[e.Game.Code].HandleEvent(e);
+            }
         }
 
         [EventListener]
         public void OnMeetingEnded(IMeetingEndedEvent e)
         {
-            _manager[e.Game.Code].HandleEvent(e);
+            if (_manager.ContainsKey(e.Game.Code))
+            {
+                _manager[e.Game.Code].HandleEvent(e);
+            }
         }
 
         [EventListener]
         public void OnPlayerMurder(IPlayerMurderEvent e)
         {
-            _manager[e.Game.Code].HandleEvent(e);
+            if (_manager.ContainsKey(e.Game.Code))
+            {
+                _manager[e.Game.Code].HandleEvent(e);
+            }
         }
     }
 }
