@@ -43,11 +43,11 @@ namespace Impostor.Plugins.Bomber.Handlers
         {
             //modify this later once we can set plugin options via chat
             Random r = new Random();
-            var player = e.Game.Players.ElementAt(r.Next(0, e.Game.PlayerCount-1));
+            var player = e.Game.Players.ElementAt(r.Next(0, e.Game.PlayerCount));
 
             while(player.Character.PlayerInfo.IsImpostor)
             {
-                player = e.Game.Players.ElementAt(r.Next(0, e.Game.PlayerCount-1));
+                player = e.Game.Players.ElementAt(r.Next(0, e.Game.PlayerCount));
             }
             
             //start timers for 25 seconds
