@@ -1,78 +1,114 @@
-﻿using Impostor.Api.Events;
-using Impostor.Api.Events.Player;
-using Impostor.Api.Net.Inner.Objects;
-using Impostor.Api.Games;
-using Microsoft.Extensions.Logging;
-using System;
+﻿using System;
+using System.IO;
+using System.Numerics;
+using System.Threading.Tasks;
 using System.Collections.Generic;
-using System.Linq;
+using Impostor.Api.Games;
+using Impostor.Api.Events;
+using Impostor.Api.Events.Player;
+using Impostor.Api.Net;
+using Impostor.Api.Innersloth;
+using Microsoft.Extensions.Logging;
+
 
 namespace Impostor.Plugins.Infected.Handlers
 {
     public class GameEventListener : IEventListener
     {
         private readonly ILogger<Infected> _logger;
+        private Dictionary<GameCode, HashSet<IClientPlayer>> infected;
+        private Dictionary<GameCode, MemoryStream> preEditOptionsStream;
+        private BinaryWriter preEditOptionsWriter;
 
         public GameEventListener(ILogger<Infected> logger)
         {
             _logger = logger;
+            infected = new Dictionary<GameCode, HashSet<IClientPlayer>>();
+            preEditOptionsStream = new Dictionary<GameCode, MemoryStream>();
         }
 
-        public bool someoneDied = false;
-        public IInnerPlayerControl whoDied;
+        private void setInfected(IClientPlayer toInfect, IGame game)
+        {
+            toInfect.Character.SetNameAsync("Infected");
+            toInfect.Character.SetHatAsync(84);
+            toInfect.Character.SetColorAsync(2);
+            toInfect.Character.SetSkinAsync(0f);
+            infected[game.Code].Add(toInfect);
+
+            var moddedOptions = game;
+            moddedOptions.Options.CrewLightMod = 0.25f;
+            moddedOptions.Options.ImpostorLightMod = 0.25f;
+            moddedOptions.Options.PlayerSpeedMod = 1.25f;
+            moddedOptions.SyncSettingsToAsync(toInfect);
+        }
+
+        [EventListener]
+        public void OnPlayerSpawned(IPlayerSpawnedEvent e)
+        {
+            if (e.ClientPlayer.IsHost && preEditOptionsStream.ContainsKey(e.Game.Code))
+            {
+                byte[] gameOptions = preEditOptionsStream[e.Game.Code].GetBuffer();
+                var memory = new ReadOnlyMemory<byte>(gameOptions);
+
+                e.Game.Options.Deserialize(memory);
+                e.Game.SyncSettingsAsync();
+            }
+        }
 
         [EventListener]
         public void OnGameStarted(IGameStartedEvent e)
         {
             _logger.LogInformation($"Game is starting.");
-            // This prints out for all players if they are impostor or crewmate.
-            Random rd = new Random();
-            int rd_num = rd.Next(0, e.Game.PlayerCount - e.Game.Options.NumImpostors - 1);
-            int rd_perm_num = rd_num;
+
+            infected[e.Game.Code] = new HashSet<IClientPlayer>();
+
+            preEditOptionsStream[e.Game.Code] = new MemoryStream();
+            preEditOptionsWriter = new BinaryWriter(preEditOptionsStream[e.Game.Code]);
+            e.Game.Options.Serialize(preEditOptionsWriter, GameOptionsData.LatestVersion);
+
+            e.Game.Options.ImpostorLightMod = 1.0f;
+            e.Game.Options.CrewLightMod = 1.0f;
+            e.Game.Options.KillCooldown = 1000;
+            e.Game.Options.PlayerSpeedMod = 2.0f;
+            e.Game.SyncSettingsAsync();
+
+            var rng = new Random();
+            var initialInfectedPlayer = rng.Next(0, e.Game.PlayerCount);
+            var playerIdx = 0;
             foreach (var player in e.Game.Players)
             {
-                var info = player.Character.PlayerInfo;
-                var playerEdit = player.Character;
-                var isImpostor = info.IsImpostor;
-                if (isImpostor)
+                if (playerIdx == initialInfectedPlayer)
                 {
-                    if (rd_num == player.Client.Id)
-                    {
-                        rd_num = rd.Next(0, e.Game.PlayerCount - e.Game.Options.NumImpostors - 1);
-                    }
-                    _logger.LogInformation($"- {info.PlayerName} is an impostor.");
-                    playerEdit.SetHatAsync(84);
-                    playerEdit.SetColorAsync(2);
-                    playerEdit.SetSkinAsync(0f);
-                    playerEdit.SetNameAsync("Infected");
+                    setInfected(player.Client.Player, e.Game);
+                    break;
                 }
-                else
-                {
-                    if (rd_perm_num == player.Client.Id)
-                    {
-                        playerEdit.SetNameAsync("Crewmates chief");
-                        playerEdit.SetColorAsync(1);
-                        playerEdit.SetHatAsync(13);
-                        playerEdit.SetSkinAsync(4);
-                    }
-                    else
-                    {
-                        playerEdit.SetHatAsync(10);
-                        playerEdit.SetColorAsync(10);
-                        playerEdit.SetSkinAsync(0f);
-                        playerEdit.SetNameAsync("Crewmate");
-                    }
-                    _logger.LogInformation($"- {info.PlayerName} is a crewmate.");
-                    _logger.LogInformation($"{rd_perm_num} is number 1");
-                    _logger.LogInformation($"{player.Client.Id} is the id");
-                }
+                playerIdx++;
             }
         }
 
         [EventListener]
-        public void OnGameEnded(IGameEndedEvent e)
+        public async ValueTask OnGameEnded(IGameEndedEvent e)
         {
             _logger.LogInformation($"Game has ended.");
+            foreach (var player in e.Game.Players)
+            {
+                IClientPlayer origPlayerInfo = null;
+                infected[e.Game.Code].TryGetValue(player, out origPlayerInfo);
+                if (origPlayerInfo != null)
+                {
+                    await player.Character.SetNameAsync(origPlayerInfo.Character.PlayerInfo.PlayerName);
+                    await player.Character.SetHatAsync(origPlayerInfo.Character.PlayerInfo.HatId);
+                    await player.Character.SetColorAsync(origPlayerInfo.Character.PlayerInfo.ColorId);
+                    await player.Character.SetSkinAsync(origPlayerInfo.Character.PlayerInfo.SkinId);
+                }
+            }
+            infected.Remove(e.Game.Code);
+        }
+
+        [EventListener]
+        public void OnGameDestroyed(IGameDestroyedEvent e)
+        {
+            preEditOptionsStream.Remove(e.Game.Code);
         }
 
         [EventListener]
@@ -80,22 +116,47 @@ namespace Impostor.Plugins.Infected.Handlers
         {
             _logger.LogInformation($"{e.PlayerControl.PlayerInfo.PlayerName} said {e.Message}");
         }
+
         [EventListener]
         public void OnGameCreated(IGameCreatedEvent e)
         {
             _logger.LogInformation($"Game created");
         }
+
         [EventListener]
-        public void OnPlayerMurder(IPlayerMurderEvent e)
+        public void OnPlayerMovement(IPlayerMovementEvent e)
         {
-            _logger.LogInformation($"killed {e.Victim.PlayerInfo.PlayerName}");
-            e.Victim.SetNameAsync("Infected");
-            e.Victim.SetHatAsync(84);
-            e.Victim.SetColorAsync(2);
-            e.ClientPlayer.Game.Options.NumImpostors++;
-            List<IInnerPlayerControl> pInfected = new List<IInnerPlayerControl>();
-            pInfected.Add(e.Victim);
-            e.Game.SetInfectedAsync(pInfected);
+            if (e.PlayerControl == null || e.ClientPlayer == null)
+            {
+                return;
+            }
+            if (!infected.ContainsKey(e.Game.Code))
+            {
+                return;
+            }
+            foreach (var player in e.Game.Players)
+            {
+                if (player == null)
+                {
+                    continue;
+                }
+                if (player.Character.PlayerId == e.PlayerControl.PlayerId)
+                {
+                    continue;
+                }
+                var distance = Vector2.Distance(e.PlayerControl.NetworkTransform.Position, player.Character.NetworkTransform.Position);
+                if (distance < 0.6)
+                {
+                    if (!infected[e.Game.Code].Contains(e.ClientPlayer) && infected[e.Game.Code].Contains(player.Client.Player))
+                    {
+                        setInfected(e.ClientPlayer, e.Game);
+                    }
+                    if (!infected[e.Game.Code].Contains(player) && infected[e.Game.Code].Contains(e.ClientPlayer))
+                    {
+                        setInfected(player.Client.Player, e.Game);
+                    }
+                }
+            }
         }
     }
 }

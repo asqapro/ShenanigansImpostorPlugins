@@ -116,7 +116,7 @@ namespace CommandHandler
                 return parsed;
             }
             
-            String commandParsePattern = @"(/\w+)\s+((?:\w+\s*)+)('.*')*";
+            String commandParsePattern = @"$(/\w+)\s((?:\w+\s*)+)('.*')*^";
             var match = Regex.Match(toParse, commandParsePattern);
 
             var commandName = match.Groups[1].Value.Trim();
