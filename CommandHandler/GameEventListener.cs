@@ -31,8 +31,11 @@ namespace Impostor.Plugins.Commands.Handlers
         {
             _logger = logger; 
             manager = new CommandManager();
-            var PtPCommandHandler = new PlayerToPlayerCommandsHandler(manager);
-            var SaverLoaderHandler = new GameOptionsSaverLoaderHandler(manager); 
+            manager.RegisterCommand(new save());
+            manager.RegisterCommand(new load());
+            manager.RegisterCommand(new whisper());
+            manager.RegisterCommand(new kill());
+            manager.RegisterCommand(new setname());
         }
 
         private async ValueTask ServerMessage(IInnerPlayerControl sender, String message)
@@ -56,36 +59,42 @@ namespace Impostor.Plugins.Commands.Handlers
 
             if (e.Message.StartsWith("/"))
             {
-                ValidatedCommand parsedCommand = manager.ParseCommand(e.Message, e.ClientPlayer);
+                var parsedCommand = await manager.Handle(e);
 
                 String response = "";
-                if (parsedCommand.Validation == ValidateResult.Valid)
+                if (parsedCommand == ValidateResult.Valid)
                 {
-                    response = await manager.CallCommand(parsedCommand, e.ClientPlayer.Character, parsedCommand, e);
+                    response = "Command executed successfully";
                 }
-                else if (parsedCommand.Validation == ValidateResult.HostOnly)
+                else if (parsedCommand == ValidateResult.HostOnly)
                 {
                     response = "Only the host may call that command";
                 }
-                else if (parsedCommand.Validation == ValidateResult.Disabled)
+                else if (parsedCommand == ValidateResult.Disabled)
                 {
                     response = "Command is disabled";
                 }
-                else if (parsedCommand.Validation == ValidateResult.DoesNotExist)
+                else if (parsedCommand == ValidateResult.DoesNotExist)
                 {
-                    return;
+                    response = "Command does not exist";
                 }
-                else if (parsedCommand.Validation == ValidateResult.MissingTarget)
+                else if (parsedCommand == ValidateResult.MissingTarget)
                 {
-                    response = $"Command was missing target. \nRefer to help: {parsedCommand.Help}";
+                    var help = manager.GetCommandHelp(e.Message);
+                    response = $"Command was missing target. \nRefer to help: {help}";
                 }
-                else if (parsedCommand.Validation == ValidateResult.MissingOptions)
+                else if (parsedCommand == ValidateResult.MissingOptions)
                 {
-                    response = $"Command was missing options. \nRefer to help: {parsedCommand.Help}";
+                    var help = manager.GetCommandHelp(e.Message);
+                    response = $"Command was missing options. \nRefer to help: {help}";
+                }
+                else if(parsedCommand == ValidateResult.CommandError)
+                {
+                    response = "Error when executing command";
                 }
                 else
                 {
-                    response = $"Something very unexpected happened. Tell {e.Game.Host.Character.PlayerInfo.PlayerName}";
+                    response = $"Something very unexpected happened. Tell asqapro or Nitcholas";
                 }
                 response = $"[ff0000ff]{response}[]";
                 await ServerMessage(e.ClientPlayer.Character, response);

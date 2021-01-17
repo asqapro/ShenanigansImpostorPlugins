@@ -1,9 +1,10 @@
 ﻿using System;
 using System.IO;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using Impostor.Api.Net.Inner.Objects;
 using Impostor.Api.Events.Player;
+using Impostor.Api.Innersloth;
 using CommandHandler;
 
 namespace GameOptionsSaverLoader
@@ -12,37 +13,35 @@ namespace GameOptionsSaverLoader
     {
         public save() : base()
         {
-        }
-
-        public override void register()
-        {
-            HasTarget = true;
-            HasOptions = false;
-            Help = "/save <filename>";
+            commandParsePattern = @"^/save (\w+\.bin)$";
+            Help = "/save <filename>.bin";
             HostOnly = true;
             Enabled = true;
-            Name = "/save";
+            Names = new List<String> {"/save"};
         }
 
-        public override ValueTask<String> handle(IInnerPlayerControl sender, ValidatedCommand parsedCommand, IPlayerChatEvent chatEvent)
+        public async override ValueTask<ValidateResult> Handle(IPlayerChatEvent chatEvent)
         {
-            String success = "";
-            Regex rg = new Regex(@"^\w+$");
-            if (!rg.IsMatch(parsedCommand.Target))
+            var match = Regex.Match(chatEvent.Message, commandParsePattern);
+
+            if (!match.Groups[1].Success)
             {
-                return ValueTask.FromResult($"Invalid filename");
+                return ValidateResult.MissingTarget;
             }
-            
-            using (BinaryWriter configWriter = new BinaryWriter(File.Open($"{parsedCommand.Target}.bin", FileMode.Create)))
+
+            var target = match.Groups[1].Value;
+
+            using (BinaryWriter configWriter = new BinaryWriter(File.Open($"{target}", FileMode.Create)))
             {
-                chatEvent.Game.Options.Serialize(configWriter, 3 /*or maybe e.Game.Version, but the options are 1, 2, or 3*/);
-                success = $"Saving game config file: {parsedCommand.Target}.bin";
+                chatEvent.Game.Options.Serialize(configWriter, GameOptionsData.LatestVersion);
             }
-            if (!File.Exists($"{parsedCommand.Target}.bin"))
+            if (!File.Exists($"{target}"))
             {
-                success = $"Failed to save game config: {parsedCommand.Target}.bin";
+                await ServerMessage(chatEvent.PlayerControl, $"Failed to save game config: {target}");
+                return ValidateResult.CommandError;
             }
-            return ValueTask.FromResult(success);
+
+            return ValidateResult.Valid;
         }
     }
 
@@ -50,50 +49,38 @@ namespace GameOptionsSaverLoader
     {
         public load() : base()
         {
-        }
-
-        public override void register()
-        {
-            HasTarget = true;
-            HasOptions = false;
+            commandParsePattern = @"^/load (\w+\.bin)$";
             Help = "/load <filename>";
             HostOnly = true;
             Enabled = true;
-            Name = "/load";
+            Names = new List<String> {"/load"};
         }
 
-        public override async ValueTask<String> handle(IInnerPlayerControl sender, ValidatedCommand parsedCommand, IPlayerChatEvent chatEvent)
+        public async override ValueTask<ValidateResult> Handle(IPlayerChatEvent chatEvent)
         {
-            Regex rg = new Regex(@"^\w+$");
-            if (!rg.IsMatch(parsedCommand.Target))
+            var match = Regex.Match(chatEvent.Message, commandParsePattern);
+
+            if (!match.Groups[1].Success)
             {
-                return $"Invalid filename";
+                return ValidateResult.MissingTarget;
             }
 
-            if (File.Exists($"{parsedCommand.Target}.bin"))
+            var target = match.Groups[2].Value;
+
+            if (File.Exists($"{target}"))
             {
-                byte[] gameOptions = File.ReadAllBytes(parsedCommand.Target);
+                byte[] gameOptions = File.ReadAllBytes(target);
                 var memory = new ReadOnlyMemory<byte>(gameOptions);
                 chatEvent.Game.Options.Deserialize(memory);
                 await chatEvent.Game.SyncSettingsAsync();
-                return $"Successfully loaded game config file: {parsedCommand.Target}.bin";
             }
             else
             {
-                return $"Failed to load game config: {parsedCommand.Target}.bin";
+                await ServerMessage(chatEvent.PlayerControl, $"Failed to load game config: {target}.bin");
+                return ValidateResult.CommandError;
             }
-        }
-    }
 
-    public class GameOptionsSaverLoaderHandler
-    {
-        private CommandManager manager;
-        public GameOptionsSaverLoaderHandler(ICommandManager manager)
-        {
-            var saveommand = new save();
-            var loadCommand = new load();
-            manager.RegisterCommand(saveommand);
-            manager.RegisterCommand(loadCommand);
+            return ValidateResult.Valid;
         }
     }
 }
