@@ -62,7 +62,11 @@ namespace Impostor.Plugins.Commands.Handlers
                 var parsedCommand = await manager.Handle(e);
 
                 String response = "";
-                if (parsedCommand == ValidateResult.HostOnly)
+                if (parsedCommand == ValidateResult.Valid)
+                {
+                    response = "Command executed successfully";
+                }
+                else if (parsedCommand == ValidateResult.HostOnly)
                 {
                     response = "Only the host may call that command";
                 }
