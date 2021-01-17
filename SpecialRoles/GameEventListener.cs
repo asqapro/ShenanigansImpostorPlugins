@@ -65,7 +65,7 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
                 }
                 else
                 {
-                    switch (rng.Next(1, 10))
+                    switch (rng.Next(3, 4))
                     {
                         case 1:
                         {
@@ -135,6 +135,15 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
 
         [EventListener]
         public void OnPlayerVoted(IPlayerVotedEvent e)
+        {
+            if (_manager.ContainsKey(e.Game.Code))
+            {
+                _manager[e.Game.Code].HandleEvent(e);
+            }
+        }
+
+        [EventListener]
+        public void OnMeetingStarted(IMeetingStartedEvent e)
         {
             if (_manager.ContainsKey(e.Game.Code))
             {

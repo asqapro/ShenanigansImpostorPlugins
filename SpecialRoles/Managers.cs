@@ -16,6 +16,7 @@ namespace Managers.Roles
         void HandleEvent(IPlayerChatEvent e);
         void HandleEvent(IPlayerExileEvent e);
         void HandleEvent(IPlayerVotedEvent e);
+        void HandleEvent(IMeetingStartedEvent e);
         void HandleEvent(IMeetingEndedEvent e);
         void HandleEvent(IPlayerMurderEvent e);
     }
@@ -122,6 +123,21 @@ namespace Managers.Roles
                 if (player.Value._listeners.Contains(ListenerTypes.OnPlayerVoted))
                 {
                     Tuple<String, ResultTypes> handlerResult = await (player.Value.HandlePlayerVote(e));
+                    if (handlerResult.Item2 == ResultTypes.KilledPlayer)
+                    {
+                        
+                    }
+                }
+            }
+        }
+
+        public async void HandleEvent(IMeetingStartedEvent e)
+        {
+            foreach(KeyValuePair<String, Role> player in RegisteredRoles)
+            {
+                if (player.Value._listeners.Contains(ListenerTypes.OnMeetingStarted))
+                {
+                    Tuple<String, ResultTypes> handlerResult = await (player.Value.HandleMeetingStart(e));
                     if (handlerResult.Item2 == ResultTypes.KilledPlayer)
                     {
                         

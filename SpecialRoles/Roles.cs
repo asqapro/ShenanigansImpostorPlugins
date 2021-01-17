@@ -27,6 +27,7 @@ namespace Roles
         OnPlayerChat,
         OnPlayerExile,
         OnPlayerVoted,
+        OnMeetingStarted,
         OnMeetingEnded,
         OnPlayerMurder
     }
@@ -63,6 +64,11 @@ namespace Roles
         }
 
         public virtual ValueTask<Tuple<String, ResultTypes>> HandlePlayerVote(IPlayerVotedEvent e)
+        {
+            return ValueTask.FromResult(new Tuple<String, ResultTypes>("", ResultTypes.NoAction));
+        }
+
+        public virtual ValueTask<Tuple<String, ResultTypes>> HandleMeetingStart(IMeetingStartedEvent e)
         {
             return ValueTask.FromResult(new Tuple<String, ResultTypes>("", ResultTypes.NoAction));
         }

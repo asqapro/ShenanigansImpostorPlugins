@@ -12,31 +12,34 @@ namespace Roles.Neutral
         public new static int TotalAllowed = 1;
         private int votedJesterCount;
         private int votedSkipCount;
+        private bool meetingActive;
         private Dictionary<String, int> votedOtherCount;
 
         public Jester(IInnerPlayerControl player) : base(player)
         {
             _listeners.Add(ListenerTypes.OnPlayerVoted);
+            _listeners.Add(ListenerTypes.OnMeetingStarted);
             _listeners.Add(ListenerTypes.OnMeetingEnded);
             RoleType = RoleTypes.Jester;
             votedJesterCount = 0;
             votedSkipCount = 0;
+            meetingActive = false;
             votedOtherCount = new Dictionary<string, int>();
         }
 
         public override ValueTask<Tuple<String, ResultTypes>> HandlePlayerVote(IPlayerVotedEvent e)
         {
-            if (e == null)
+            if (!meetingActive)
             {
                 return ValueTask.FromResult(new Tuple<String, ResultTypes>("", ResultTypes.NoAction));
             }
-            if (e.VotedFor.PlayerInfo.PlayerName == _player.PlayerInfo.PlayerName)
-            {
-                votedJesterCount++;
-            }
-            else if(e.VoteType == VoteType.Skip)
+            if(e.VoteType == VoteType.Skip)
             {
                 votedSkipCount++;
+            }
+            else if (e.VotedFor.PlayerInfo.PlayerName == _player.PlayerInfo.PlayerName)
+            {
+                votedJesterCount++;
             }
             else
             {
@@ -50,25 +53,34 @@ namespace Roles.Neutral
             return ValueTask.FromResult(new Tuple<String, ResultTypes>("", ResultTypes.NoAction));
         }
 
+        public override ValueTask<Tuple<String, ResultTypes>> HandleMeetingStart(IMeetingStartedEvent e)
+        {
+            meetingActive = true;
+            return ValueTask.FromResult(new Tuple<String, ResultTypes>("", ResultTypes.NoAction));
+
+        }
+
         public override async ValueTask<Tuple<String, ResultTypes>> HandleMeetingEnd(IMeetingEndedEvent e)
         {
-            var jesterVoted = true;
+            meetingActive = false;
+
+            var votedJester = true;
             if (votedJesterCount > votedSkipCount)
             {
                 foreach (var voteCount in votedOtherCount)
                 {
-                    if (voteCount.Value > votedJesterCount)
+                    if (voteCount.Value >= votedJesterCount)
                     {
-                        jesterVoted = false;
+                        votedJester = false;
                     }
                     votedOtherCount[voteCount.Key] = 0;
                 }
             }
-            if (votedSkipCount > votedJesterCount)
+            if (votedSkipCount >= votedJesterCount)
             {
-                jesterVoted = false;
+                votedJester = false;
             }
-            if (jesterVoted)
+            if (votedJester)
             {
                 var playerName = _player.PlayerInfo.PlayerName;
                 var playerColor = _player.PlayerInfo.ColorId;
