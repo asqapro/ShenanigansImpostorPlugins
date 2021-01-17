@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Impostor.Api.Events.Player;
 using Impostor.Api.Innersloth;
@@ -16,7 +17,7 @@ namespace GameOptionsSaverLoader
             Help = "/save <filename>.bin";
             HostOnly = true;
             Enabled = true;
-            Name = "/save";
+            Names = new List<String> {"/save"};
         }
 
         public async override ValueTask<ValidateResult> Handle(IPlayerChatEvent chatEvent)
@@ -52,7 +53,7 @@ namespace GameOptionsSaverLoader
             Help = "/load <filename>";
             HostOnly = true;
             Enabled = true;
-            Name = "/load";
+            Names = new List<String> {"/load"};
         }
 
         public async override ValueTask<ValidateResult> Handle(IPlayerChatEvent chatEvent)

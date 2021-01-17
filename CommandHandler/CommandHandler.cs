@@ -24,7 +24,7 @@ namespace CommandHandler
         public String Help {get; set;}
         public bool HostOnly {get; set;}
         public bool Enabled {get; set;}
-        public String Name {get; set;}
+        public List<String> Names {get; set;}
 
         public Command()
         {
@@ -64,11 +64,22 @@ namespace CommandHandler
 
         public bool RegisterCommand(Command newCommand)
         {
-            if (managers.ContainsKey(newCommand.Name))
+            var nameTaken = false;
+            foreach (var name in newCommand.Names)
             {
-                return false;
+                if (managers.ContainsKey(name))
+                {
+                    nameTaken = true;
+                    return false;
+                }
             }
-            managers[newCommand.Name] = newCommand;
+            if (!nameTaken)
+            {
+                foreach (var name in newCommand.Names)
+                {
+                    managers[name] = newCommand;
+                }
+            }
             return true;
         }
 

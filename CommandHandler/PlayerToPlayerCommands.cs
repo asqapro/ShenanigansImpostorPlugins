@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Impostor.Api.Net.Inner.Objects;
 using Impostor.Api.Events.Player;
@@ -16,7 +17,7 @@ namespace PlayerToPlayerCommands
             Help = "(/w | /whisper) <target> '<Message>'";
             HostOnly = false;
             Enabled = true;
-            Name = "/w";
+            Names = new List<String> {"/w", "/whisper"};
         }
 
         private async ValueTask sendWhisper(IInnerPlayerControl sender, IInnerPlayerControl receiver, String message)
@@ -73,7 +74,7 @@ namespace PlayerToPlayerCommands
             Help = "/kill <target>";
             HostOnly = true;
             Enabled = true;
-            Name = "/kill";
+            Names = new List<String> {"/kill"};
         }
 
         public async override ValueTask<ValidateResult> Handle(IPlayerChatEvent chatEvent)
@@ -116,7 +117,7 @@ namespace PlayerToPlayerCommands
             Help = "/setname <newname>";
             HostOnly = false;
             Enabled = true;
-            Name = "/setname";
+            Names = new List<String> {"/setname"};
         }
 
         public async override ValueTask<ValidateResult> Handle(IPlayerChatEvent chatEvent)
