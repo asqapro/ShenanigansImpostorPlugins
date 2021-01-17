@@ -12,13 +12,8 @@ namespace PlayerToPlayerCommands
     {
         public whisper() : base()
         {
-        }
-
-        public override void register()
-        {
-            HasTarget = true;
-            HasOptions = true;
-            Help = "/w <target> '<Message>'";
+            commandParsePattern = @"^(?:/w|/whisper) ((?:\w+\s?)+) '(.*)'$";
+            Help = "(/w | /whisper) <target> '<Message>'";
             HostOnly = false;
             Enabled = true;
             Name = "/w";
@@ -32,19 +27,41 @@ namespace PlayerToPlayerCommands
             await sender.SetNameAsync(currentName);
         }
 
-        public override async ValueTask<String> handle(IInnerPlayerControl sender, ValidatedCommand parsedCommand, IPlayerChatEvent chatEvent)
+        public async override ValueTask<ValidateResult> Handle(IPlayerChatEvent chatEvent)
         {
-            String whisper = parsedCommand.Options;
+            var match = Regex.Match(chatEvent.Message, commandParsePattern);
+
+            if (!match.Groups[1].Success)
+            {
+                return ValidateResult.MissingTarget;
+            }
+            else if(!match.Groups[2].Success)
+            {
+                return ValidateResult.MissingOptions;
+            }
+
+            var target = match.Groups[1].Value;
+            var whisper = match.Groups[2].Value;
+            
+            var whisperSent = false;
+
             foreach (var player in chatEvent.Game.Players)
             {
                 var info = player.Character.PlayerInfo;
-                if (info.PlayerName == parsedCommand.Target)
+                if (info.PlayerName == target)
                 {
-                    await sendWhisper(sender, player.Character, whisper);
-                    return $"Whisper sent to {parsedCommand.Target}";
+                    await sendWhisper(chatEvent.PlayerControl, player.Character, whisper);
+                    whisperSent = true;
                 }
             }
-            return $"Failed to whisper {parsedCommand.Target}";
+
+            if (!whisperSent)
+            {
+                await ServerMessage(chatEvent.PlayerControl, $"Failed to whisper {target}");
+                return ValidateResult.CommandError;
+            }
+
+            return ValidateResult.Valid;
         }
     }
 
@@ -52,38 +69,42 @@ namespace PlayerToPlayerCommands
     {
         public kill() : base()
         {
-        }
-
-        public override void register()
-        {
-            HasTarget = true;
-            HasOptions = false;
+            commandParsePattern = @"^/kill ((?:\w+\s?)+)$";
             Help = "/kill <target>";
             HostOnly = true;
             Enabled = true;
             Name = "/kill";
         }
 
-        public override async ValueTask<String> handle(IInnerPlayerControl sender, ValidatedCommand parsedCommand, IPlayerChatEvent chatEvent)
+        public async override ValueTask<ValidateResult> Handle(IPlayerChatEvent chatEvent)
         {
+            var match = Regex.Match(chatEvent.Message, commandParsePattern);
+
+            if (!match.Groups[1].Success)
+            {
+                return ValidateResult.MissingTarget;
+            }
+
+            var target = match.Groups[1].Value;
+
+            var killedPlayer = false;
+
             foreach (var player in chatEvent.Game.Players)
             {
-                if (player.Character.PlayerInfo.PlayerName == parsedCommand.Target)
+                if (player.Character.PlayerInfo.PlayerName == target)
                 {
                     await player.Character.SetExiledAsync();
-                    return $"Successfully killed {parsedCommand.Target}";
+                    killedPlayer = true;
                 }
             }
-            return $"Failed to kill {parsedCommand.Target}";
-        }
-    }
 
-    public static class StringExt
-    {
-        public static string Truncate(this string value, int maxLength)
-        {
-            if (string.IsNullOrEmpty(value)) return value;
-            return value.Length <= maxLength ? value : value.Substring(0, maxLength); 
+            if (!killedPlayer)
+            {
+                await ServerMessage(chatEvent.PlayerControl, $"Failed to kill {target}");
+                return ValidateResult.CommandError;
+            }
+
+            return ValidateResult.Valid;
         }
     }
 
@@ -91,58 +112,53 @@ namespace PlayerToPlayerCommands
     {
         public setname() : base()
         {
-        }
-
-        public override void register()
-        {
-            HasTarget = true;
-            HasOptions = false;
+            commandParsePattern = @"^/setname ((?:\w+\s?)+)$";
             Help = "/setname <newname>";
             HostOnly = false;
             Enabled = true;
             Name = "/setname";
         }
 
-        private Boolean isAlphaNumeric(string strToCheck)
+        public async override ValueTask<ValidateResult> Handle(IPlayerChatEvent chatEvent)
         {
-            Regex rg = new Regex(@"^[a-zA-Z0-9\s,]*$");
-            return rg.IsMatch(strToCheck);
-        }
+            var match = Regex.Match(chatEvent.Message, commandParsePattern);
 
-        public override async ValueTask<String> handle(IInnerPlayerControl sender, ValidatedCommand parsedCommand, IPlayerChatEvent chatEvent)
-        {
-            var newName = parsedCommand.Target.Truncate(25);
-            if (!isAlphaNumeric(newName))
+            if (!match.Groups[1].Success)
             {
-                return "New name contained invalid characters. Valid characters are alphanumeric, commas, and spaces";
+                return ValidateResult.MissingTarget;
             }
+
+            var target = match.Groups[1].Value;
+
+            //Truncate new name to 20 characters max
+            var maxNameLength = 20;
+            var newName = target.Length <= maxNameLength ? target : target.Substring(0, maxNameLength);
+
+            bool canSetName = true;
             foreach (var player in chatEvent.Game.Players)
             {
                 if (player.Character.PlayerInfo.PlayerName == newName)
                 {
-                    return "Another player is already using that name";
+                    await ServerMessage(chatEvent.PlayerControl, "Another player is already using that name");
+                    canSetName = false;
                 }
             }
             if (chatEvent.Game.GameState != GameStates.NotStarted)
             { 
-                return $"You cannot change your name during an active game. Current game state: {chatEvent.Game.GameState}";
+                await ServerMessage(chatEvent.PlayerControl, $"You cannot change your name during an active game. Current game state: {chatEvent.Game.GameState}");
+                canSetName = false;
             }
-            await sender.SetNameAsync(newName);
-            return "Succesfully changed name";
-        }
-    }
 
-    public class PlayerToPlayerCommandsHandler
-    {
-        private ICommandManager manager;
-        public PlayerToPlayerCommandsHandler(ICommandManager manager)
-        {
-            var whisperCommand = new whisper();
-            var killCommand = new kill();
-            var setnameCommand = new setname();
-            manager.RegisterCommand(whisperCommand);
-            manager.RegisterCommand(killCommand);
-            manager.RegisterCommand(setnameCommand);
+            if (canSetName)
+            {
+                await chatEvent.PlayerControl.SetNameAsync(newName);
+            }
+            else
+            {
+                return ValidateResult.CommandError;
+            }
+
+            return ValidateResult.Valid;
         }
     }
 }
