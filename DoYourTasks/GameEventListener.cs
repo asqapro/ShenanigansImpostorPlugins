@@ -24,6 +24,7 @@ namespace Impostor.Plugins.DoYourTasks.Handlers
         public GameEventListener(ILogger<DoYourTasks> logger)
         {
             _logger = logger;
+            preEditOptionsStream = new Dictionary<GameCode, MemoryStream>();
         }
 
         /// <summary>
