@@ -28,7 +28,7 @@ namespace CommandHandler
 
         public Command()
         {
-            commandParsePattern = @"^\w+ ((?:\w+\s?)+) '(.*)'$";
+            commandParsePattern = @"^/\w+ ((?:\w+\s?)+) '(.*)'$";
         }
 
         public abstract ValueTask<ValidateResult> Handle(IPlayerChatEvent chatEvent);
