@@ -23,7 +23,7 @@ namespace Roles
         InsaneCop,
         ConfusedCop,
         Oracle,
-        Lightkeeper
+        Lightkeeper,
     }
 
     public enum ListenerTypes

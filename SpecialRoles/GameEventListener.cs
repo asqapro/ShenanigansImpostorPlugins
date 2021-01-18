@@ -64,14 +64,14 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
 
             List<RoleTypes> crewNeutralRoles = new List<RoleTypes> 
             {
-                /*RoleTypes.Crew,
+                RoleTypes.Crew,
                 RoleTypes.Medium,
                 RoleTypes.Sheriff,
                 RoleTypes.Jester,
                 RoleTypes.Cop,
                 RoleTypes.InsaneCop,
                 RoleTypes.ConfusedCop,
-                RoleTypes.Oracle,*/
+                RoleTypes.Oracle,
                 RoleTypes.Lightkeeper
             };
 
@@ -91,53 +91,13 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
                 {
                     RoleTypes randImpostorRole = impostorRoles[rng.Next(0, impostorRoles.Count)];
                     _manager[e.Game.Code].RegisterRole(player.Character, randImpostorRole);
-                    switch (randImpostorRole)
-                    {
-                        case RoleTypes.Hitman:
-                            _logger.LogInformation($"{playerInfo.PlayerName} is a hitman");
-                            break;
-                        case RoleTypes.VoodooLady:
-                            _logger.LogInformation($"{playerInfo.PlayerName} is a voodoo lady");
-                            break;
-                        default:
-                            _logger.LogInformation($"- {playerInfo.PlayerName} is an impostor.");
-                            break;
-                    }
+                    _logger.LogInformation($"{playerInfo.PlayerName} is a {randImpostorRole.ToString()}");
                 }
                 else
                 {
                     RoleTypes randCrewRole = crewNeutralRoles[rng.Next(0, crewNeutralRoles.Count)];
                     _manager[e.Game.Code].RegisterRole(player.Character, randCrewRole);
-                    switch (randCrewRole)
-                    {
-                        case RoleTypes.Medium:
-                            _logger.LogInformation($"{playerInfo.PlayerName} is a medium");
-                            break;
-                        case RoleTypes.Sheriff:
-                            _logger.LogInformation($"{playerInfo.PlayerName} is a sheriff");
-                            break;
-                        case RoleTypes.Jester:
-                            _logger.LogInformation($"{playerInfo.PlayerName} is a jester");
-                            break;
-                        case RoleTypes.Cop:
-                            _logger.LogInformation($"{playerInfo.PlayerName} is a cop");
-                            break;
-                        case RoleTypes.InsaneCop:
-                            _logger.LogInformation($"{playerInfo.PlayerName} is an insane cop");
-                            break;
-                        case RoleTypes.ConfusedCop:
-                            _logger.LogInformation($"{playerInfo.PlayerName} is a confused cop");
-                            break;
-                        case RoleTypes.Oracle:
-                            _logger.LogInformation($"{playerInfo.PlayerName} is an oracle");
-                            break;
-                        case RoleTypes.Lightkeeper:
-                            _logger.LogInformation($"{playerInfo.PlayerName} is a lightkeeper");
-                            break;
-                        default:
-                            _logger.LogInformation($"{playerInfo.PlayerName} is a crewmate");
-                            break;
-                    }
+                    _logger.LogInformation($"{playerInfo.PlayerName} is a {randCrewRole.ToString()}");
                 }
             }
         }
