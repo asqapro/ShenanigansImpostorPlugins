@@ -385,6 +385,7 @@ namespace Roles.Crew
     public class Lightkeeper : Role
     {
         private bool extinguishLight;
+        private bool lightExtinguished;
         private Dictionary<byte, String> originalPlayerNames;
         private Dictionary<byte, byte> originalPlayerColors;
         public new static int TotalAllowed = 1;
@@ -397,6 +398,7 @@ namespace Roles.Crew
             _listeners.Add(ListenerTypes.OnMeetingEnded);
             RoleType = RoleTypes.Lightkeeper;
             extinguishLight = false;
+            lightExtinguished = false;
             originalPlayerNames = new Dictionary<byte, String>();
             originalPlayerColors = new Dictionary<byte, byte>();
         }
@@ -423,11 +425,12 @@ namespace Roles.Crew
         {
             if (extinguishLight)
             {
+                lightExtinguished = true;
                 saveSettings(e);
                 e.Game.Options.AnonymousVotes = true;
+                e.Game.SyncSettingsAsync();
                 foreach (var player in e.Game.Players)
                 {
-                    //problem is that playerinfo the object is getting stored, so when setname and setcolor get called, the stored playerinfo is updated
                     originalPlayerNames[player.Character.PlayerId] = player.Character.PlayerInfo.PlayerName;
                     originalPlayerColors[player.Character.PlayerId] = player.Character.PlayerInfo.ColorId;
                     player.Character.SetNameAsync("");
@@ -439,7 +442,7 @@ namespace Roles.Crew
 
         public override ValueTask<Tuple<String, ResultTypes>> HandleMeetingEnd(IMeetingEndedEvent e)
         {
-            if (extinguishLight)
+            if (lightExtinguished)
             {
                 loadSettings(e);
                 foreach (var player in e.Game.Players)
@@ -450,6 +453,7 @@ namespace Roles.Crew
                     player.Character.SetColorAsync(origPlayerColor);
                 }
                 extinguishLight = false;
+                lightExtinguished = false;
             }
             return ValueTask.FromResult(new Tuple<String, ResultTypes>("", ResultTypes.NoAction));
         }
