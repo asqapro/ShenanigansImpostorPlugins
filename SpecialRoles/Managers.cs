@@ -35,9 +35,15 @@ namespace Managers.Roles
             String roleMessage = "";
             switch (playerRole)
             {
+                case RoleTypes.Crew:
+                    roleMessage = "You are a crewmate. Finish your tasks to win";
+                    break;
+                case RoleTypes.Impostor:
+                    roleMessage = "You are an impostor. Kill the crew to win";
+                    break; 
                 case RoleTypes.Hitman:
                     RegisteredRoles[player.PlayerInfo.PlayerName] = new Hitman(player);
-                    roleMessage = "You are a hitman. \nYou may silenty kill 1 player using /silentkill";
+                    roleMessage = "You are a hitman. \nYou may silently kill 1 player using /silentkill";
                     break;
                 case RoleTypes.Jester:
                     RegisteredRoles[player.PlayerInfo.PlayerName] = new Jester(player);
@@ -70,6 +76,10 @@ namespace Managers.Roles
                 case RoleTypes.Oracle:
                     RegisteredRoles[player.PlayerInfo.PlayerName] = new Oracle(player);
                     roleMessage = "You are an oracle. \nWhen you die, you will reveal the role of the last player you picked using /reveal";
+                    break;
+                case RoleTypes.Lightkeeper:
+                    RegisteredRoles[player.PlayerInfo.PlayerName] = new Lightkeeper(player);
+                    roleMessage = "You are a lightkeeper. \nWhen you die, you will cast the next meeting into darkness";
                     break;
                 default:
                     break;

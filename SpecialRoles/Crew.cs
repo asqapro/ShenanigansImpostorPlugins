@@ -6,6 +6,7 @@ using Impostor.Api.Events.Player;
 using Impostor.Api.Events.Meeting;
 using Impostor.Api.Net;
 using Impostor.Api.Net.Inner.Objects;
+using Impostor.Api.Innersloth.Customization;
 
 namespace Roles.Crew
 {
@@ -378,6 +379,79 @@ namespace Roles.Crew
                 await revealOnDeath(e.Game.Players);
             }
             return new Tuple<String, ResultTypes>("", ResultTypes.NoAction);
+        }
+    }
+
+    public class Lightkeeper : Role
+    {
+        private bool extinguishLight;
+        private Dictionary<byte, String> originalPlayerNames;
+        private Dictionary<byte, byte> originalPlayerColors;
+        public new static int TotalAllowed = 1;
+
+        public Lightkeeper(IInnerPlayerControl player) : base(player)
+        {
+            _listeners.Add(ListenerTypes.OnPlayerExile);
+            _listeners.Add(ListenerTypes.OnPlayerMurder);
+            _listeners.Add(ListenerTypes.OnMeetingStarted);
+            _listeners.Add(ListenerTypes.OnMeetingEnded);
+            RoleType = RoleTypes.Lightkeeper;
+            extinguishLight = false;
+            originalPlayerNames = new Dictionary<byte, String>();
+            originalPlayerColors = new Dictionary<byte, byte>();
+        }
+
+        public override ValueTask<Tuple<String, ResultTypes>> HandlePlayerMurder(IPlayerMurderEvent e)
+        {
+            if (e.Victim == _player)
+            {
+                extinguishLight = true;
+            }
+            return ValueTask.FromResult(new Tuple<String, ResultTypes>("", ResultTypes.NoAction));
+        }
+
+        public override ValueTask<Tuple<String, ResultTypes>> HandlePlayerExile(IPlayerExileEvent e)
+        {
+            if (e.PlayerControl == _player)
+            {
+                extinguishLight = true;
+            }
+            return ValueTask.FromResult(new Tuple<String, ResultTypes>("", ResultTypes.NoAction));
+        }
+
+        public override ValueTask<Tuple<String, ResultTypes>> HandleMeetingStart(IMeetingStartedEvent e)
+        {
+            if (extinguishLight)
+            {
+                saveSettings(e);
+                e.Game.Options.AnonymousVotes = true;
+                foreach (var player in e.Game.Players)
+                {
+                    //problem is that playerinfo the object is getting stored, so when setname and setcolor get called, the stored playerinfo is updated
+                    originalPlayerNames[player.Character.PlayerId] = player.Character.PlayerInfo.PlayerName;
+                    originalPlayerColors[player.Character.PlayerId] = player.Character.PlayerInfo.ColorId;
+                    player.Character.SetNameAsync("");
+                    player.Character.SetColorAsync(ColorType.Black);
+                }
+            }
+            return ValueTask.FromResult(new Tuple<String, ResultTypes>("", ResultTypes.NoAction));
+        }
+
+        public override ValueTask<Tuple<String, ResultTypes>> HandleMeetingEnd(IMeetingEndedEvent e)
+        {
+            if (extinguishLight)
+            {
+                loadSettings(e);
+                foreach (var player in e.Game.Players)
+                {
+                    var origPlayerName = originalPlayerNames[player.Character.PlayerId];
+                    var origPlayerColor = originalPlayerColors[player.Character.PlayerId];
+                    player.Character.SetNameAsync(origPlayerName);
+                    player.Character.SetColorAsync(origPlayerColor);
+                }
+                extinguishLight = false;
+            }
+            return ValueTask.FromResult(new Tuple<String, ResultTypes>("", ResultTypes.NoAction));
         }
     }
 }

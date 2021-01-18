@@ -1,9 +1,12 @@
 using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Impostor.Api.Events;
 using Impostor.Api.Events.Player;
 using Impostor.Api.Events.Meeting;
 using Impostor.Api.Net.Inner.Objects;
+using Impostor.Api.Innersloth;
 
 namespace Roles
 {
@@ -19,7 +22,8 @@ namespace Roles
         Cop,
         InsaneCop,
         ConfusedCop,
-        Oracle
+        Oracle,
+        Lightkeeper
     }
 
     public enum ListenerTypes
@@ -46,11 +50,33 @@ namespace Roles
         public RoleTypes RoleType {get; set;}
 
         public Tuple<String, ResultTypes> HandlerResult;
+        protected MemoryStream preEditOptionsStream;
+        protected BinaryWriter preEditOptionsWriter;
 
         public Role(IInnerPlayerControl player)
         {
             _player = player;
             _listeners = new HashSet<ListenerTypes>();
+        }
+
+        protected void saveSettings(IGameEvent e)
+        {
+            preEditOptionsStream = new MemoryStream();
+            preEditOptionsWriter = new BinaryWriter(preEditOptionsStream);
+            e.Game.Options.Serialize(preEditOptionsWriter, GameOptionsData.LatestVersion);
+        }
+
+        protected void loadSettings(IGameEvent e)
+        {
+            if (preEditOptionsStream == null)
+            {
+                return;
+            }
+            byte[] gameOptions = preEditOptionsStream.GetBuffer();
+            var memory = new ReadOnlyMemory<byte>(gameOptions);
+
+            e.Game.Options.Deserialize(memory);
+            e.Game.SyncSettingsAsync();
         }
 
         public virtual ValueTask<Tuple<String, ResultTypes>> HandlePlayerChat(IPlayerChatEvent e)
