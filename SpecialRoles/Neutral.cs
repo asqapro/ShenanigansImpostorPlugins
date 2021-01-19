@@ -7,7 +7,7 @@ using Impostor.Api.Net.Inner.Objects;
 
 namespace Roles.Neutral
 {
-    public class Jester : Role
+    public class Jester : InnerPlayerControlRole
     {
         public new static int TotalAllowed = 1;
         private int votedJesterCount;
@@ -15,7 +15,7 @@ namespace Roles.Neutral
         private bool meetingActive;
         private Dictionary<String, int> votedOtherCount;
 
-        public Jester(IInnerPlayerControl player) : base(player)
+        public Jester(IInnerPlayerControl parent) : base(parent)
         {
             _listeners.Add(ListenerTypes.OnPlayerVoted);
             _listeners.Add(ListenerTypes.OnMeetingStarted);
@@ -27,11 +27,12 @@ namespace Roles.Neutral
             votedOtherCount = new Dictionary<string, int>();
         }
 
-        public override ValueTask<Tuple<String, ResultTypes>> HandlePlayerVote(IPlayerVotedEvent e)
+        public override ValueTask<HandlerAction> HandlePlayerVote(IPlayerVotedEvent e)
         {
             if (!meetingActive)
             {
-                return ValueTask.FromResult(new Tuple<String, ResultTypes>("", ResultTypes.NoAction));
+                return ValueTask.FromResult(new HandlerAction());
+                //return ValueTask.FromResult(new Tuple<String, ResultTypes>("", ResultTypes.NoAction));
             }
             if(e.VoteType == VoteType.Skip)
             {
@@ -50,17 +51,19 @@ namespace Roles.Neutral
                 }
                 votedOtherCount[votedName]++;
             }
-            return ValueTask.FromResult(new Tuple<String, ResultTypes>("", ResultTypes.NoAction));
+            return ValueTask.FromResult(new HandlerAction());
+            //return ValueTask.FromResult(new Tuple<String, ResultTypes>("", ResultTypes.NoAction));
         }
 
-        public override ValueTask<Tuple<String, ResultTypes>> HandleMeetingStart(IMeetingStartedEvent e)
+        public override ValueTask<HandlerAction> HandleMeetingStart(IMeetingStartedEvent e)
         {
             meetingActive = true;
-            return ValueTask.FromResult(new Tuple<String, ResultTypes>("", ResultTypes.NoAction));
+            return ValueTask.FromResult(new HandlerAction());
+            //return ValueTask.FromResult(new Tuple<String, ResultTypes>("", ResultTypes.NoAction));
 
         }
 
-        public override async ValueTask<Tuple<String, ResultTypes>> HandleMeetingEnd(IMeetingEndedEvent e)
+        public override async ValueTask<HandlerAction> HandleMeetingEnd(IMeetingEndedEvent e)
         {
             meetingActive = false;
 
@@ -101,7 +104,8 @@ namespace Roles.Neutral
 
             votedJesterCount = 0;
             votedSkipCount = 0;
-            return new Tuple<String, ResultTypes>("", ResultTypes.NoAction);
+            return new HandlerAction();
+            //return new Tuple<String, ResultTypes>("", ResultTypes.NoAction);
         }
     }
 }

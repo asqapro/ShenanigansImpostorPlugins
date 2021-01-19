@@ -7,12 +7,20 @@ using Impostor.Api.Net.Inner.Objects;
 
 namespace Roles.Evil
 {
-    public class Hitman : Role
+    public class Impersonator : InnerPlayerControlRole
+    {
+        public Impersonator(IInnerPlayerControl parent) : base(parent)
+        {
+            RoleType = RoleTypes.Impostor;
+        }
+    }
+
+    public class Hitman : InnerPlayerControlRole
     {
         public new static int TotalAllowed = 1;
         private int ammo;
 
-        public Hitman(IInnerPlayerControl player) : base(player)
+        public Hitman(IInnerPlayerControl parent) : base(parent)
         {
             _listeners.Add(ListenerTypes.OnPlayerChat);
             RoleType = RoleTypes.Hitman;
@@ -39,7 +47,7 @@ namespace Roles.Evil
             ammo--;
         }
 
-        public override async ValueTask<Tuple<String, ResultTypes>> HandlePlayerChat(IPlayerChatEvent e)
+        public override async ValueTask<HandlerAction> HandlePlayerChat(IPlayerChatEvent e)
         {
             if (e.Message.StartsWith("/") && e.PlayerControl.PlayerInfo.PlayerName == _player.PlayerInfo.PlayerName)
             {
@@ -54,7 +62,8 @@ namespace Roles.Evil
                             if (ammo > 0)
                             {
                                 await silentKillPlayer(player.Character);
-                                return new Tuple<String, ResultTypes>(player.Character.PlayerInfo.PlayerName, ResultTypes.KilledPlayer);
+                                return new HandlerAction();
+                                //return new Tuple<String, ResultTypes>(player.Character.PlayerInfo.PlayerName, ResultTypes.KilledPlayer);
                             }
                             else
                             {
@@ -65,18 +74,19 @@ namespace Roles.Evil
                     }
                 }
             }
-            return new Tuple<String, ResultTypes>("", ResultTypes.NoAction);
+            return new HandlerAction();
+            //return new Tuple<String, ResultTypes>("", ResultTypes.NoAction);
         }
     }
 
-    public class VoodooLady : Role
+    public class VoodooLady : InnerPlayerControlRole
     {
         public new static int TotalAllowed = 1;
         private String killWord;
         private String killTarget;
         private bool targetKilled;
 
-        public VoodooLady(IInnerPlayerControl player) : base(player)
+        public VoodooLady(IInnerPlayerControl parent) : base(parent)
         {
             _listeners.Add(ListenerTypes.OnPlayerChat);
             RoleType = RoleTypes.VoodooLady;
@@ -108,7 +118,7 @@ namespace Roles.Evil
             await _player.SetNameAsync(currentName);
         }
 
-        public override async ValueTask<Tuple<String, ResultTypes>> HandlePlayerChat(IPlayerChatEvent e)
+        public override async ValueTask<HandlerAction> HandlePlayerChat(IPlayerChatEvent e)
         {
             if (e.Message.StartsWith("/"))
             {
@@ -121,7 +131,8 @@ namespace Roles.Evil
                         if (killWord != "" || killTarget != "")
                         {
                             await evilResponse("Kill target and word have already been set, you cannot change them");
-                            return new Tuple<String, ResultTypes>("", ResultTypes.NoAction);
+                            return new HandlerAction();
+                            //return new Tuple<String, ResultTypes>("", ResultTypes.NoAction);
                         }
                         bool foundPlayer = false;
                         foreach (var player in e.Game.Players)
@@ -135,13 +146,15 @@ namespace Roles.Evil
                         if (!foundPlayer)
                         {
                             await evilResponse("Kill target is a not a player in this game");
-                            return new Tuple<String, ResultTypes>("", ResultTypes.NoAction);
+                            return new HandlerAction();
+                            //return new Tuple<String, ResultTypes>("", ResultTypes.NoAction);
                         }
                         killWord = parsedCommand.Groups[1].Value;
                         killTarget = parsedCommand.Groups[2].Value;
                         await evilResponse("Kill target and word have been set");
                     }
-                    return new Tuple<String, ResultTypes>("", ResultTypes.NoAction);
+                    return new HandlerAction();
+                    //return new Tuple<String, ResultTypes>("", ResultTypes.NoAction);
                 }
             }
             String[] checkWords = e.Message.Split(" ");
@@ -151,10 +164,12 @@ namespace Roles.Evil
                 {
                     await silentKillPlayer(e.PlayerControl);
                     targetKilled = true;
-                    return new Tuple<String, ResultTypes>(e.PlayerControl.PlayerInfo.PlayerName, ResultTypes.KilledPlayer);
+                    return new HandlerAction();
+                    //return new Tuple<String, ResultTypes>(e.PlayerControl.PlayerInfo.PlayerName, ResultTypes.KilledPlayer);
                 }
             }
-            return new Tuple<String, ResultTypes>("", ResultTypes.NoAction);
+            return new HandlerAction();
+            //return new Tuple<String, ResultTypes>("", ResultTypes.NoAction);
         }
     }
 }

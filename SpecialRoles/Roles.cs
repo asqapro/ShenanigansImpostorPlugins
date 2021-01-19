@@ -5,8 +5,13 @@ using System.Threading.Tasks;
 using Impostor.Api.Events;
 using Impostor.Api.Events.Player;
 using Impostor.Api.Events.Meeting;
+using Impostor.Api.Net;
 using Impostor.Api.Net.Inner.Objects;
+using Impostor.Api.Net.Inner.Objects.Components;
+using Impostor.Api.Innersloth.Customization;
 using Impostor.Api.Innersloth;
+
+#nullable enable
 
 namespace Roles
 {
@@ -23,7 +28,7 @@ namespace Roles
         InsaneCop,
         ConfusedCop,
         Oracle,
-        Lightkeeper,
+        Lightkeeper
     }
 
     public enum ListenerTypes
@@ -42,21 +47,112 @@ namespace Roles
         KilledPlayer
     }
 
-    public abstract class Role
+    public class HandlerAction
+    {
+        public ResultTypes Action;
+        public String? AffectedPlayer;
+    }
+
+    public abstract class InnerPlayerControlRole : IInnerPlayerControl
     {
         protected IInnerPlayerControl _player;
+        public byte PlayerId { get; private set; }
+        public uint NetId { get; }
+
+        public int OwnerId { get; }
+
+        IInnerPlayerPhysics IInnerPlayerControl.Physics => Physics;
+
+        IInnerCustomNetworkTransform IInnerPlayerControl.NetworkTransform => NetworkTransform;
+
+        IInnerPlayerInfo IInnerPlayerControl.PlayerInfo => PlayerInfo;
+
+        IInnerPlayerPhysics Physics { get; }
+
+        IInnerCustomNetworkTransform NetworkTransform { get; }
+
+        IInnerPlayerInfo PlayerInfo { get; }
+
         public HashSet<ListenerTypes> _listeners {get; set;}
         public static int TotalAllowed {get; set;}
         public RoleTypes RoleType {get; set;}
 
-        public Tuple<String, ResultTypes> HandlerResult;
-        protected MemoryStream preEditOptionsStream;
-        protected BinaryWriter preEditOptionsWriter;
+        public HandlerAction? HandlerResult;
+        protected MemoryStream? preEditOptionsStream;
+        protected BinaryWriter? preEditOptionsWriter;
 
-        public Role(IInnerPlayerControl player)
+        public InnerPlayerControlRole(IInnerPlayerControl parent)
         {
-            _player = player;
+            _player = parent;
             _listeners = new HashSet<ListenerTypes>();
+            Physics = parent.Physics;
+            NetworkTransform = parent.NetworkTransform;
+            PlayerInfo = parent.PlayerInfo;
+        }
+
+        public async ValueTask SetNameAsync(string name)
+        {
+            await _player.SetNameAsync(name);
+        }
+
+        public async ValueTask SetColorAsync(byte colorId)
+        {
+            await _player.SetColorAsync(colorId);
+        }
+
+        public async ValueTask SetColorAsync(ColorType colorType)
+        {
+            await _player.SetColorAsync(colorType);
+        }
+
+        public async ValueTask SetHatAsync(uint hatId)
+        {
+            await _player.SetHatAsync(hatId);
+        }
+
+        public async ValueTask SetHatAsync(HatType hatType)
+        {
+            await _player.SetHatAsync(hatType);
+        }
+
+        public async ValueTask SetPetAsync(uint petId)
+        {
+            await _player.SetPetAsync(petId);
+        }
+
+        public async ValueTask SetPetAsync(PetType petType)
+        {
+            await _player.SetPetAsync(petType);
+        }
+
+        public async ValueTask SetSkinAsync(uint skinId)
+        {
+            await _player.SetSkinAsync(skinId);
+        }
+
+        public async ValueTask SetSkinAsync(SkinType skinType)
+        {
+            await _player.SetSkinAsync(skinType);
+        }
+
+        public async ValueTask SendChatAsync(string text)
+        {
+            await _player.SendChatAsync(text);
+        }
+
+        public async ValueTask SendChatToPlayerAsync(string text, IInnerPlayerControl? player = null)
+        {
+            await _player.SendChatToPlayerAsync(text, player);
+        }
+
+        public async ValueTask SetMurderedByAsync(IClientPlayer impostor)
+        {
+            await _player.SetMurderedByAsync(impostor);
+        }
+
+        public async ValueTask SetExiledAsync()
+        {
+            await _player.SetExiledAsync();
         }
 
         protected void saveSettings(IGameEvent e)
@@ -79,34 +175,34 @@ namespace Roles
             e.Game.SyncSettingsAsync();
         }
 
-        public virtual ValueTask<Tuple<String, ResultTypes>> HandlePlayerChat(IPlayerChatEvent e)
+        public virtual ValueTask<HandlerAction> HandlePlayerChat(IPlayerChatEvent e)
         {
-            return ValueTask.FromResult(new Tuple<String, ResultTypes>("", ResultTypes.NoAction));
+            return ValueTask.FromResult(new HandlerAction());
         }
 
-        public virtual ValueTask<Tuple<String, ResultTypes>> HandlePlayerExile(IPlayerExileEvent e)
+        public virtual ValueTask<HandlerAction> HandlePlayerExile(IPlayerExileEvent e)
         {
-            return ValueTask.FromResult(new Tuple<String, ResultTypes>("", ResultTypes.NoAction));
+            return ValueTask.FromResult(new HandlerAction());
         }
 
-        public virtual ValueTask<Tuple<String, ResultTypes>> HandlePlayerVote(IPlayerVotedEvent e)
+        public virtual ValueTask<HandlerAction> HandlePlayerVote(IPlayerVotedEvent e)
         {
-            return ValueTask.FromResult(new Tuple<String, ResultTypes>("", ResultTypes.NoAction));
+            return ValueTask.FromResult(new HandlerAction());
         }
 
-        public virtual ValueTask<Tuple<String, ResultTypes>> HandleMeetingStart(IMeetingStartedEvent e)
+        public virtual ValueTask<HandlerAction> HandleMeetingStart(IMeetingStartedEvent e)
         {
-            return ValueTask.FromResult(new Tuple<String, ResultTypes>("", ResultTypes.NoAction));
+            return ValueTask.FromResult(new HandlerAction());
         }
 
-        public virtual ValueTask<Tuple<String, ResultTypes>> HandleMeetingEnd(IMeetingEndedEvent e)
+        public virtual ValueTask<HandlerAction> HandleMeetingEnd(IMeetingEndedEvent e)
         {
-            return ValueTask.FromResult(new Tuple<String, ResultTypes>("", ResultTypes.NoAction));
+            return ValueTask.FromResult(new HandlerAction());
         }
 
-        public virtual ValueTask<Tuple<String, ResultTypes>> HandlePlayerMurder(IPlayerMurderEvent e)
+        public virtual ValueTask<HandlerAction> HandlePlayerMurder(IPlayerMurderEvent e)
         {
-            return ValueTask.FromResult(new Tuple<String, ResultTypes>("", ResultTypes.NoAction));
+            return ValueTask.FromResult(new HandlerAction());
         }
     }
 }

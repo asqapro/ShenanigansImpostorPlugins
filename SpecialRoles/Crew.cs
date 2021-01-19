@@ -10,11 +10,18 @@ using Impostor.Api.Innersloth.Customization;
 
 namespace Roles.Crew
 {
-    public class Medium : Role
+    public class Crew : InnerPlayerControlRole
+    {
+        public Crew(IInnerPlayerControl parent) : base(parent)
+        {
+            RoleType = RoleTypes.Crew;
+        }
+    }
+    public class Medium : InnerPlayerControlRole
     {
         public new static int TotalAllowed = 2;
 
-        public Medium(IInnerPlayerControl player) : base(player)
+        public Medium(IInnerPlayerControl parent) : base(parent)
         {
             _listeners.Add(ListenerTypes.OnPlayerChat);
             RoleType = RoleTypes.Medium;
@@ -36,7 +43,7 @@ namespace Roles.Crew
             await aliveSender.SetColorAsync(currentColor);
         }
 
-        public override async ValueTask<Tuple<String, ResultTypes>> HandlePlayerChat(IPlayerChatEvent e)
+        public override async ValueTask<HandlerAction> HandlePlayerChat(IPlayerChatEvent e)
         {
             if (e.PlayerControl.PlayerInfo.IsDead)
             {
@@ -49,16 +56,17 @@ namespace Roles.Crew
                     }
                 }
             }
-            return new Tuple<String, ResultTypes>("", ResultTypes.NoAction);
+            return new HandlerAction();
+            //return new HandlerAction("", ResultTypes.NoAction);
         }
     }
 
-    public class Sheriff : Role
+    public class Sheriff : InnerPlayerControlRole
     {
         private int ammo;
         public new static int TotalAllowed = 1;
 
-        public Sheriff(IInnerPlayerControl player) : base(player)
+        public Sheriff(IInnerPlayerControl parent) : base(parent)
         {
             _listeners.Add(ListenerTypes.OnPlayerChat);
             RoleType = RoleTypes.Sheriff;
@@ -95,7 +103,7 @@ namespace Roles.Crew
             }
         }
 
-        public override async ValueTask<Tuple<String, ResultTypes>> HandlePlayerChat(IPlayerChatEvent e)
+        public override async ValueTask<HandlerAction> HandlePlayerChat(IPlayerChatEvent e)
         {
             if (e.Message.StartsWith("/") && e.PlayerControl.PlayerInfo.PlayerName == _player.PlayerInfo.PlayerName)
             {
@@ -108,28 +116,30 @@ namespace Roles.Crew
                         if (player.Character.PlayerInfo.PlayerName == parsedCommand.Groups[1].Value)
                         {
                             await shootPlayer(player.Character);
-                            return new Tuple<String, ResultTypes>(player.Character.PlayerInfo.PlayerName, ResultTypes.KilledPlayer);
+                            return new HandlerAction();
+                            //return new HandlerAction(player.Character.PlayerInfo.PlayerName, ResultTypes.KilledPlayer);
                         }
                     }
                 }
             }
-            return new Tuple<String, ResultTypes>("", ResultTypes.NoAction);
+            return new HandlerAction();
+            //return new HandlerAction("", ResultTypes.NoAction);
         }
     }
 
-    public class Cop : Role
+    public class Cop : InnerPlayerControlRole
     {
         private bool usedInvestigate;
         public new static int TotalAllowed = 1;
 
-        public Cop(IInnerPlayerControl player) : base(player)
+        public Cop(IInnerPlayerControl parent) : base(parent)
         {
             _listeners.Add(ListenerTypes.OnPlayerChat);
             RoleType = RoleTypes.Cop;
             usedInvestigate = false;
         }
 
-        public override async ValueTask<Tuple<String, ResultTypes>> HandlePlayerChat(IPlayerChatEvent e)
+        public override async ValueTask<HandlerAction> HandlePlayerChat(IPlayerChatEvent e)
         {
             if (e.Message.StartsWith("/") && e.PlayerControl.PlayerInfo.PlayerName == _player.PlayerInfo.PlayerName)
             {
@@ -162,29 +172,31 @@ namespace Roles.Crew
                     }
                 }
             }
-            return new Tuple<String, ResultTypes>("", ResultTypes.NoAction);
+            return new HandlerAction();
+            //return new HandlerAction("", ResultTypes.NoAction);
         }
 
-        public override ValueTask<Tuple<String, ResultTypes>> HandleMeetingEnd(IMeetingEndedEvent e)
+        public override ValueTask<HandlerAction> HandleMeetingEnd(IMeetingEndedEvent e)
         {
             usedInvestigate = false;
-            return ValueTask.FromResult(new Tuple<String, ResultTypes>("", ResultTypes.NoAction));
+            return ValueTask.FromResult(new HandlerAction());
+            //return ValueTask.FromResult(new HandlerAction("", ResultTypes.NoAction));
         }
     }
 
-    public class InsaneCop : Role
+    public class InsaneCop : InnerPlayerControlRole
     {
         private bool usedInvestigate;
         public new static int TotalAllowed = 1;
 
-        public InsaneCop(IInnerPlayerControl player) : base(player)
+        public InsaneCop(IInnerPlayerControl parent) : base(parent)
         {
             _listeners.Add(ListenerTypes.OnPlayerChat);
             RoleType = RoleTypes.InsaneCop;
             usedInvestigate = false;
         }
 
-        public override async ValueTask<Tuple<String, ResultTypes>> HandlePlayerChat(IPlayerChatEvent e)
+        public override async ValueTask<HandlerAction> HandlePlayerChat(IPlayerChatEvent e)
         {
             if (e.Message.StartsWith("/") && e.PlayerControl.PlayerInfo.PlayerName == _player.PlayerInfo.PlayerName)
             {
@@ -217,28 +229,30 @@ namespace Roles.Crew
                     }
                 }
             }
-            return new Tuple<String, ResultTypes>("", ResultTypes.NoAction);
+            return new HandlerAction();
+            //return new HandlerAction("", ResultTypes.NoAction);
         }
 
-        public override ValueTask<Tuple<String, ResultTypes>> HandleMeetingEnd(IMeetingEndedEvent e)
+        public override ValueTask<HandlerAction> HandleMeetingEnd(IMeetingEndedEvent e)
         {
             usedInvestigate = false;
-            return ValueTask.FromResult(new Tuple<String, ResultTypes>("", ResultTypes.NoAction));
+            return ValueTask.FromResult(new HandlerAction());
+            //return ValueTask.FromResult(new HandlerAction("", ResultTypes.NoAction));
         }
     }
-    public class ConfusedCop : Role
+    public class ConfusedCop : InnerPlayerControlRole
     {
         private bool usedInvestigate;
         public new static int TotalAllowed = 1;
 
-        public ConfusedCop(IInnerPlayerControl player) : base(player)
+        public ConfusedCop(IInnerPlayerControl parent) : base(parent)
         {
             _listeners.Add(ListenerTypes.OnPlayerChat);
             RoleType = RoleTypes.ConfusedCop;
             usedInvestigate = false;
         }
 
-        public override async ValueTask<Tuple<String, ResultTypes>> HandlePlayerChat(IPlayerChatEvent e)
+        public override async ValueTask<HandlerAction> HandlePlayerChat(IPlayerChatEvent e)
         {
             if (e.Message.StartsWith("/") && e.PlayerControl.PlayerInfo.PlayerName == _player.PlayerInfo.PlayerName)
             {
@@ -272,23 +286,25 @@ namespace Roles.Crew
                     }
                 }
             }
-            return new Tuple<String, ResultTypes>("", ResultTypes.NoAction);
+            return new HandlerAction();
+            //return new HandlerAction("", ResultTypes.NoAction);
         }
 
-        public override ValueTask<Tuple<String, ResultTypes>> HandleMeetingEnd(IMeetingEndedEvent e)
+        public override ValueTask<HandlerAction> HandleMeetingEnd(IMeetingEndedEvent e)
         {
             usedInvestigate = false;
-            return ValueTask.FromResult(new Tuple<String, ResultTypes>("", ResultTypes.NoAction));
+            return ValueTask.FromResult(new HandlerAction());
+            //return ValueTask.FromResult(new HandlerAction("", ResultTypes.NoAction));
         }
     }
 
-    public class Oracle : Role
+    public class Oracle : InnerPlayerControlRole
     {
         private bool usedReveal;
         private IInnerPlayerControl toReveal;
         public new static int TotalAllowed = 1;
 
-        public Oracle(IInnerPlayerControl player) : base(player)
+        public Oracle(IInnerPlayerControl parent) : base(parent)
         {
             _listeners.Add(ListenerTypes.OnPlayerChat);
             _listeners.Add(ListenerTypes.OnPlayerExile);
@@ -298,7 +314,7 @@ namespace Roles.Crew
             usedReveal = false;
         }
 
-        public override async ValueTask<Tuple<String, ResultTypes>> HandlePlayerChat(IPlayerChatEvent e)
+        public override async ValueTask<HandlerAction> HandlePlayerChat(IPlayerChatEvent e)
         {
             if (e.Message.StartsWith("/") && e.PlayerControl.PlayerInfo.PlayerName == _player.PlayerInfo.PlayerName)
             {
@@ -324,13 +340,15 @@ namespace Roles.Crew
                     }
                 }
             }
-            return new Tuple<String, ResultTypes>("", ResultTypes.NoAction);
+            return new HandlerAction();
+            //return new HandlerAction("", ResultTypes.NoAction);
         }
 
-        public override ValueTask<Tuple<String, ResultTypes>> HandleMeetingEnd(IMeetingEndedEvent e)
+        public override ValueTask<HandlerAction> HandleMeetingEnd(IMeetingEndedEvent e)
         {
             usedReveal = false;
-            return ValueTask.FromResult(new Tuple<String, ResultTypes>("", ResultTypes.NoAction));
+            return ValueTask.FromResult(new HandlerAction());
+            //return ValueTask.FromResult(new HandlerAction("", ResultTypes.NoAction));
         }
 
         private async ValueTask revealOnDeath(IEnumerable<IClientPlayer> players)
@@ -363,26 +381,28 @@ namespace Roles.Crew
             }
         }
 
-        public override async ValueTask<Tuple<String, ResultTypes>> HandlePlayerExile(IPlayerExileEvent e)
+        public override async ValueTask<HandlerAction> HandlePlayerExile(IPlayerExileEvent e)
         {
             if (e.PlayerControl.PlayerInfo.PlayerName == _player.PlayerInfo.PlayerName && toReveal != null)
             {
                 await revealOnDeath(e.Game.Players);
             }
-            return new Tuple<String, ResultTypes>("", ResultTypes.NoAction);
+            return new HandlerAction();
+            //return new HandlerAction("", ResultTypes.NoAction);
         }
 
-        public override async ValueTask<Tuple<String, ResultTypes>> HandlePlayerMurder(IPlayerMurderEvent e)
+        public override async ValueTask<HandlerAction> HandlePlayerMurder(IPlayerMurderEvent e)
         {
             if (e.Victim.PlayerInfo.PlayerName == _player.PlayerInfo.PlayerName && toReveal != null)
             {
                 await revealOnDeath(e.Game.Players);
             }
-            return new Tuple<String, ResultTypes>("", ResultTypes.NoAction);
+            return new HandlerAction();
+            //return new HandlerAction("", ResultTypes.NoAction);
         }
     }
 
-    public class Lightkeeper : Role
+    public class Lightkeeper : InnerPlayerControlRole
     {
         private bool extinguishLight;
         private bool lightExtinguished;
@@ -390,7 +410,7 @@ namespace Roles.Crew
         private Dictionary<byte, byte> originalPlayerColors;
         public new static int TotalAllowed = 1;
 
-        public Lightkeeper(IInnerPlayerControl player) : base(player)
+        public Lightkeeper(IInnerPlayerControl parent) : base(parent)
         {
             _listeners.Add(ListenerTypes.OnPlayerExile);
             _listeners.Add(ListenerTypes.OnPlayerMurder);
@@ -403,25 +423,27 @@ namespace Roles.Crew
             originalPlayerColors = new Dictionary<byte, byte>();
         }
 
-        public override ValueTask<Tuple<String, ResultTypes>> HandlePlayerMurder(IPlayerMurderEvent e)
+        public override ValueTask<HandlerAction> HandlePlayerMurder(IPlayerMurderEvent e)
         {
             if (e.Victim == _player)
             {
                 extinguishLight = true;
             }
-            return ValueTask.FromResult(new Tuple<String, ResultTypes>("", ResultTypes.NoAction));
+            return ValueTask.FromResult(new HandlerAction());
+            //return ValueTask.FromResult(new HandlerAction("", ResultTypes.NoAction));
         }
 
-        public override ValueTask<Tuple<String, ResultTypes>> HandlePlayerExile(IPlayerExileEvent e)
+        public override ValueTask<HandlerAction> HandlePlayerExile(IPlayerExileEvent e)
         {
             if (e.PlayerControl == _player)
             {
                 extinguishLight = true;
             }
-            return ValueTask.FromResult(new Tuple<String, ResultTypes>("", ResultTypes.NoAction));
+            return ValueTask.FromResult(new HandlerAction());
+            //return ValueTask.FromResult(new HandlerAction("", ResultTypes.NoAction));
         }
 
-        public override ValueTask<Tuple<String, ResultTypes>> HandleMeetingStart(IMeetingStartedEvent e)
+        public override ValueTask<HandlerAction> HandleMeetingStart(IMeetingStartedEvent e)
         {
             if (extinguishLight)
             {
@@ -437,10 +459,11 @@ namespace Roles.Crew
                     player.Character.SetColorAsync(ColorType.Black);
                 }
             }
-            return ValueTask.FromResult(new Tuple<String, ResultTypes>("", ResultTypes.NoAction));
+            return ValueTask.FromResult(new HandlerAction());
+            //return ValueTask.FromResult(new HandlerAction("", ResultTypes.NoAction));
         }
 
-        public override ValueTask<Tuple<String, ResultTypes>> HandleMeetingEnd(IMeetingEndedEvent e)
+        public override ValueTask<HandlerAction> HandleMeetingEnd(IMeetingEndedEvent e)
         {
             if (lightExtinguished)
             {
@@ -455,7 +478,8 @@ namespace Roles.Crew
                 extinguishLight = false;
                 lightExtinguished = false;
             }
-            return ValueTask.FromResult(new Tuple<String, ResultTypes>("", ResultTypes.NoAction));
+            return ValueTask.FromResult(new HandlerAction());
+            //return ValueTask.FromResult(new HandlerAction("", ResultTypes.NoAction));
         }
     }
 }

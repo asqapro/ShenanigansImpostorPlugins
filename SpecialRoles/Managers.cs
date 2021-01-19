@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Impostor.Api.Events;
 using Impostor.Api.Events.Player;
 using Impostor.Api.Events.Meeting;
 using Impostor.Api.Net.Inner.Objects;
@@ -23,87 +24,92 @@ namespace Managers.Roles
 
     public class RolesManager : IRolesManager
     {
-        Dictionary<String, Role> RegisteredRoles;
+        ICollection<InnerPlayerControlRole> PlayerRoles;
 
         public RolesManager()
         {
-            RegisteredRoles = new Dictionary<String, Role>();
+            PlayerRoles = new List<InnerPlayerControlRole>();
         }
 
-        public async void RegisterRole(IInnerPlayerControl player, RoleTypes playerRole)
+        public async void RegisterRole(IInnerPlayerControl parentPlayerControl, RoleTypes playerRoleType)
         {
             String roleMessage = "";
-            switch (playerRole)
+            InnerPlayerControlRole role = new Crew(parentPlayerControl);
+            switch (playerRoleType)
             {
                 case RoleTypes.Crew:
+                    role = new Crew(parentPlayerControl);
                     roleMessage = "You are a crewmate. Finish your tasks to win";
                     break;
                 case RoleTypes.Impostor:
+                    role = new Impersonator(parentPlayerControl);
                     roleMessage = "You are an impostor. Kill the crew to win";
                     break; 
                 case RoleTypes.Hitman:
-                    RegisteredRoles[player.PlayerInfo.PlayerName] = new Hitman(player);
+                    role = new Hitman(parentPlayerControl);
                     roleMessage = "You are a hitman. \nYou may silently kill 1 player using /silentkill";
                     break;
                 case RoleTypes.Jester:
-                    RegisteredRoles[player.PlayerInfo.PlayerName] = new Jester(player);
+                    role = new Jester(parentPlayerControl);
                     roleMessage = "You are a jester. \nTrick the crew into voting you out to win";
                     break;
                 case RoleTypes.Medium:
-                    RegisteredRoles[player.PlayerInfo.PlayerName] = new Medium(player);
+                    role = new Medium(parentPlayerControl);
                     roleMessage = "You are a medium. \nYou can hear the dead speak";
                     break;
                 case RoleTypes.Sheriff:
-                    RegisteredRoles[player.PlayerInfo.PlayerName] = new Sheriff(player);
+                    role = new Sheriff(parentPlayerControl);
                     roleMessage = "You are a sheriff. \nYou may shoot 1 player that you suspect is an impostor, but if you guess wrong, you will also die";
                     break;
                 case RoleTypes.VoodooLady:
-                    RegisteredRoles[player.PlayerInfo.PlayerName] = new VoodooLady(player);
+                    role = new VoodooLady(parentPlayerControl);
                     roleMessage = "You are a voodoo lady. \nPick a kill word and target using /setkillword";
                     break;
                 case RoleTypes.Cop:
-                    RegisteredRoles[player.PlayerInfo.PlayerName] = new Cop(player);
+                    role = new Cop(parentPlayerControl);
                     roleMessage = "You are a cop. \nYou can find impostors by using /investigate on players";
                     break;
                 case RoleTypes.InsaneCop:
-                    RegisteredRoles[player.PlayerInfo.PlayerName] = new InsaneCop(player);
+                    role = new InsaneCop(parentPlayerControl);
                     roleMessage = "You are a cop. \nYou can find impostors by using /investigate on players";
                     break;
                 case RoleTypes.ConfusedCop:
-                    RegisteredRoles[player.PlayerInfo.PlayerName] = new ConfusedCop(player);
+                    role = new ConfusedCop(parentPlayerControl);
                     roleMessage = "You are a cop. \nYou can find impostors by using /investigate on players";
                     break;
                 case RoleTypes.Oracle:
-                    RegisteredRoles[player.PlayerInfo.PlayerName] = new Oracle(player);
+                    role = new Oracle(parentPlayerControl);
                     roleMessage = "You are an oracle. \nWhen you die, you will reveal the role of the last player you picked using /reveal";
                     break;
                 case RoleTypes.Lightkeeper:
-                    RegisteredRoles[player.PlayerInfo.PlayerName] = new Lightkeeper(player);
+                    role = new Lightkeeper(parentPlayerControl);
                     roleMessage = "You are a lightkeeper. \nWhen you die, you will cast the next meeting into darkness";
                     break;
                 default:
                     break;
             }
+
+            PlayerRoles.Add(role);
             
-            var currentName = player.PlayerInfo.PlayerName;
-            var currentColor = player.PlayerInfo.ColorId;
-            await player.SetNameAsync("Server");
-            await player.SetColorAsync(Impostor.Api.Innersloth.Customization.ColorType.White);
+            var currentName = parentPlayerControl.PlayerInfo.PlayerName;
+            var currentColor = parentPlayerControl.PlayerInfo.ColorId;
+            await parentPlayerControl.SetNameAsync("Server");
+            await parentPlayerControl.SetColorAsync(Impostor.Api.Innersloth.Customization.ColorType.White);
 
-            await player.SendChatToPlayerAsync(roleMessage, player);
+            await parentPlayerControl.SendChatToPlayerAsync(roleMessage, parentPlayerControl);
 
-            await player.SetNameAsync(currentName);
-            await player.SetColorAsync(currentColor);
+            await parentPlayerControl.SetNameAsync(currentName);
+            await parentPlayerControl.SetColorAsync(currentColor);
         }
 
         public async void HandleEvent(IPlayerChatEvent e)
         {
-            foreach(KeyValuePair<String, Role> player in RegisteredRoles)
+            foreach(var player in PlayerRoles)
             {
-                if (player.Value._listeners.Contains(ListenerTypes.OnPlayerChat))
+                if (player._listeners.Contains(ListenerTypes.OnPlayerChat))
                 {
-                    Tuple<String, ResultTypes> handlerResult = await (player.Value.HandlePlayerChat(e));
-                    if (handlerResult.Item2 == ResultTypes.KilledPlayer)
+                    HandlerAction handlerResult = await (player.HandlePlayerChat(e));
+                    if (handlerResult.Action == ResultTypes.KilledPlayer)
                     {
 
                     }
@@ -113,12 +119,12 @@ namespace Managers.Roles
 
         public async void HandleEvent(IPlayerExileEvent e)
         {
-            foreach(KeyValuePair<String, Role> player in RegisteredRoles)
+            foreach(var player in PlayerRoles)
             {
-                if (player.Value._listeners.Contains(ListenerTypes.OnPlayerExile))
+                if (player._listeners.Contains(ListenerTypes.OnPlayerExile))
                 {
-                    Tuple<String, ResultTypes> handlerResult = await (player.Value.HandlePlayerExile(e));
-                    if (handlerResult.Item2 == ResultTypes.KilledPlayer)
+                    HandlerAction handlerResult = await (player.HandlePlayerExile(e));
+                    if (handlerResult.Action == ResultTypes.KilledPlayer)
                     {
                         
                     }
@@ -128,12 +134,12 @@ namespace Managers.Roles
 
         public async void HandleEvent(IPlayerVotedEvent e)
         {
-            foreach(KeyValuePair<String, Role> player in RegisteredRoles)
+            foreach(var player in PlayerRoles)
             {
-                if (player.Value._listeners.Contains(ListenerTypes.OnPlayerVoted))
+                if (player._listeners.Contains(ListenerTypes.OnPlayerVoted))
                 {
-                    Tuple<String, ResultTypes> handlerResult = await (player.Value.HandlePlayerVote(e));
-                    if (handlerResult.Item2 == ResultTypes.KilledPlayer)
+                    HandlerAction handlerResult = await (player.HandlePlayerVote(e));
+                    if (handlerResult.Action == ResultTypes.KilledPlayer)
                     {
                         
                     }
@@ -143,12 +149,12 @@ namespace Managers.Roles
 
         public async void HandleEvent(IMeetingStartedEvent e)
         {
-            foreach(KeyValuePair<String, Role> player in RegisteredRoles)
+            foreach(var player in PlayerRoles)
             {
-                if (player.Value._listeners.Contains(ListenerTypes.OnMeetingStarted))
+                if (player._listeners.Contains(ListenerTypes.OnMeetingStarted))
                 {
-                    Tuple<String, ResultTypes> handlerResult = await (player.Value.HandleMeetingStart(e));
-                    if (handlerResult.Item2 == ResultTypes.KilledPlayer)
+                    HandlerAction handlerResult = await (player.HandleMeetingStart(e));
+                    if (handlerResult.Action == ResultTypes.KilledPlayer)
                     {
                         
                     }
@@ -158,12 +164,12 @@ namespace Managers.Roles
 
         public async void HandleEvent(IMeetingEndedEvent e)
         {
-            foreach(KeyValuePair<String, Role> player in RegisteredRoles)
+            foreach(var player in PlayerRoles)
             {
-                if (player.Value._listeners.Contains(ListenerTypes.OnMeetingEnded))
+                if (player._listeners.Contains(ListenerTypes.OnMeetingEnded))
                 {
-                    Tuple<String, ResultTypes> handlerResult = await (player.Value.HandleMeetingEnd(e));
-                    if (handlerResult.Item2 == ResultTypes.KilledPlayer)
+                    HandlerAction handlerResult = await (player.HandleMeetingEnd(e));
+                    if (handlerResult.Action == ResultTypes.KilledPlayer)
                     {
                         
                     }
@@ -173,12 +179,12 @@ namespace Managers.Roles
 
         public async void HandleEvent(IPlayerMurderEvent e)
         {
-            foreach(KeyValuePair<String, Role> player in RegisteredRoles)
+            foreach(var player in PlayerRoles)
             {
-                if (player.Value._listeners.Contains(ListenerTypes.OnPlayerMurder))
+                if (player._listeners.Contains(ListenerTypes.OnPlayerMurder))
                 {
-                    Tuple<String, ResultTypes> handlerResult = await (player.Value.HandlePlayerMurder(e));
-                    if (handlerResult.Item2 == ResultTypes.KilledPlayer)
+                    HandlerAction handlerResult = await (player.HandlePlayerMurder(e));
+                    if (handlerResult.Action == ResultTypes.KilledPlayer)
                     {
                         
                     }
