@@ -112,6 +112,7 @@ namespace Managers.Roles
         {
             if (toKill.PreventNextDeath)
             {
+                await toKill.SendChatToPlayerAsync("You have been protected from death", toKill);
                 toKill.PreventNextDeath = false;
                 return;
             }

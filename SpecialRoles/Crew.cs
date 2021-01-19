@@ -475,6 +475,7 @@ namespace Roles.Crew
         public Doctor(IInnerPlayerControl parent) : base(parent)
         {
             _listeners.Add(ListenerTypes.OnPlayerChat);
+            _listeners.Add(ListenerTypes.OnMeetingEnded);
             RoleType = RoleTypes.Doctor;
             usedProtect = false;
         }
@@ -495,6 +496,7 @@ namespace Roles.Crew
                             {
                                 usedProtect = true;
                                 toProtect = player.Client.Id;
+                                await _player.SendChatToPlayerAsync($"{player.Character.PlayerInfo.PlayerName} will be protected once during the next meeting");
                                 return new HandlerAction(ResultTypes.NoAction);
                             }
                         }
@@ -508,7 +510,7 @@ namespace Roles.Crew
             return new HandlerAction(ResultTypes.NoAction);
         }
 
-        public override ValueTask<HandlerAction> HandleMeetingStart(IMeetingStartedEvent e)
+        public override ValueTask<HandlerAction> HandleMeetingEnd(IMeetingEndedEvent e)
         {
             if (usedProtect)
             {

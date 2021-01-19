@@ -12,12 +12,6 @@ using Roles;
 
 namespace Impostor.Plugins.SpecialRoles.Handlers
 {
-    /// <summary>
-    ///     A class that listens for two events.
-    ///     It may be more but this is just an example.
-    ///
-    ///     Make sure your class implements <see cref="IEventListener"/>.
-    /// </summary>
     public class GameEventListener : IEventListener
     {
         private readonly ILogger<SpecialRoles> _logger;
@@ -45,12 +39,6 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
             }
         }
 
-        /// <summary>
-        ///     An example event listener.
-        /// </summary>
-        /// <param name="e">
-        ///     The event you want to listen for.
-        /// </param>
         [EventListener]
         public void OnGameStarted(IGameStartedEvent e)
         {
@@ -64,7 +52,7 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
 
             List<RoleTypes> crewNeutralRoles = new List<RoleTypes> 
             {
-                /*RoleTypes.Crew,
+                RoleTypes.Crew,
                 RoleTypes.Medium,
                 RoleTypes.Sheriff,
                 RoleTypes.Jester,
@@ -72,7 +60,7 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
                 RoleTypes.InsaneCop,
                 RoleTypes.ConfusedCop,
                 RoleTypes.Oracle,
-                RoleTypes.Lightkeeper,*/
+                RoleTypes.Lightkeeper,
                 RoleTypes.Doctor
             };
 
@@ -83,7 +71,6 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
                 RoleTypes.VoodooLady
             };
 
-            // This prints out for all players if they are impostor or crewmate.
             Random rng = new Random();
             foreach (var player in e.Game.Players)
             {
