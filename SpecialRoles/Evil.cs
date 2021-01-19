@@ -41,9 +41,9 @@ namespace Roles.Evil
             await _player.SetColorAsync(currentColor);
         }
 
-        private async ValueTask silentKillPlayer(IInnerPlayerControl toShoot)
+        private void silentKillPlayer(IInnerPlayerControl toShoot)
         {
-            await toShoot.SetExiledAsync();
+            //await toShoot.SetExiledAsync();
             ammo--;
         }
 
@@ -61,7 +61,7 @@ namespace Roles.Evil
                         {
                             if (ammo > 0)
                             {
-                                await silentKillPlayer(player.Character);
+                                silentKillPlayer(player.Character);
                                 return new HandlerAction(ResultTypes.KillExilePlayer, player.Client.Id);
                             }
                             else
@@ -112,7 +112,7 @@ namespace Roles.Evil
             var currentName = _player.PlayerInfo.PlayerName;
             await _player.SetNameAsync($"{currentName} (Voodoo Lady)");
             await _player.SendChatToPlayerAsync("I'll have your tongue for that!", toKill);
-            await toKill.SetExiledAsync();
+            //await toKill.SetExiledAsync();
             await _player.SetNameAsync(currentName);
         }
 

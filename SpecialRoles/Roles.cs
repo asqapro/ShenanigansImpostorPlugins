@@ -28,7 +28,8 @@ namespace Roles
         InsaneCop,
         ConfusedCop,
         Oracle,
-        Lightkeeper
+        Lightkeeper,
+        Doctor
     }
 
     public enum ListenerTypes
@@ -45,7 +46,8 @@ namespace Roles
     {
         NoAction,
         KillExilePlayer,
-        KillMurderPlayer
+        KillMurderPlayer,
+        ProtectPlayer
     }
 
     public class HandlerAction

@@ -62,7 +62,7 @@ namespace Roles.Crew
 
     public class Sheriff : InnerPlayerControlRole
     {
-        private int ammo;
+        private int ammo { get; set; }
         public new static int TotalAllowed = 1;
 
         public Sheriff(IInnerPlayerControl parent) : base(parent)
@@ -93,7 +93,7 @@ namespace Roles.Crew
                 await lawResponse("You have no bullets left");
                 return;
             }
-            await toShoot.SetExiledAsync();
+            //await toShoot.SetExiledAsync();
             ammo--;
             if (!toShoot.PlayerInfo.IsImpostor)
             {
@@ -126,7 +126,7 @@ namespace Roles.Crew
 
     public class Cop : InnerPlayerControlRole
     {
-        private bool usedInvestigate;
+        private bool usedInvestigate { get; set; }
         public new static int TotalAllowed = 1;
 
         public Cop(IInnerPlayerControl parent) : base(parent)
@@ -181,7 +181,7 @@ namespace Roles.Crew
 
     public class InsaneCop : InnerPlayerControlRole
     {
-        private bool usedInvestigate;
+        private bool usedInvestigate { get; set; }
         public new static int TotalAllowed = 1;
 
         public InsaneCop(IInnerPlayerControl parent) : base(parent)
@@ -235,7 +235,7 @@ namespace Roles.Crew
     }
     public class ConfusedCop : InnerPlayerControlRole
     {
-        private bool usedInvestigate;
+        private bool usedInvestigate { get; set; }
         public new static int TotalAllowed = 1;
 
         public ConfusedCop(IInnerPlayerControl parent) : base(parent)
@@ -291,8 +291,8 @@ namespace Roles.Crew
 
     public class Oracle : InnerPlayerControlRole
     {
-        private bool usedReveal;
-        private IInnerPlayerControl toReveal;
+        private bool usedReveal { get; set; }
+        private IInnerPlayerControl toReveal { get; set; }
         public new static int TotalAllowed = 1;
 
         public Oracle(IInnerPlayerControl parent) : base(parent)
@@ -391,10 +391,10 @@ namespace Roles.Crew
 
     public class Lightkeeper : InnerPlayerControlRole
     {
-        private bool extinguishLight;
-        private bool lightExtinguished;
-        private Dictionary<byte, String> originalPlayerNames;
-        private Dictionary<byte, byte> originalPlayerColors;
+        private bool extinguishLight { get; set; }
+        private bool lightExtinguished { get; set; }
+        private Dictionary<byte, String> originalPlayerNames { get; set; }
+        private Dictionary<byte, byte> originalPlayerColors { get; set; }
         public new static int TotalAllowed = 1;
 
         public Lightkeeper(IInnerPlayerControl parent) : base(parent)
@@ -461,6 +461,59 @@ namespace Roles.Crew
                 }
                 extinguishLight = false;
                 lightExtinguished = false;
+            }
+            return ValueTask.FromResult(new HandlerAction(ResultTypes.NoAction));
+        }
+    }
+
+    public class Doctor : InnerPlayerControlRole
+    {
+        private bool usedProtect { get; set; }
+        private int toProtect { get; set; }
+        public new static int TotalAllowed = 1;
+
+        public Doctor(IInnerPlayerControl parent) : base(parent)
+        {
+            _listeners.Add(ListenerTypes.OnPlayerChat);
+            RoleType = RoleTypes.Doctor;
+            usedProtect = false;
+        }
+
+        public override async ValueTask<HandlerAction> HandlePlayerChat(IPlayerChatEvent e)
+        {
+            if (e.Message.StartsWith("/") && e.PlayerControl.OwnerId == _player.OwnerId)
+            {
+                String commandParsePattern = @"/protect ((?:\w\s?)+)";
+                var parsedCommand = Regex.Match(e.Message, commandParsePattern);
+                if (parsedCommand.Success && !_player.PlayerInfo.IsDead)
+                {
+                    if (!usedProtect)
+                    {
+                        foreach (var player in e.Game.Players)
+                        {
+                            if (player.Character.PlayerInfo.PlayerName == parsedCommand.Groups[1].Value)
+                            {
+                                usedProtect = true;
+                                toProtect = player.Client.Id;
+                                return new HandlerAction(ResultTypes.NoAction);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        await _player.SendChatToPlayerAsync("You may only protect 1 player every meeting");
+                    }
+                }
+            }
+            return new HandlerAction(ResultTypes.NoAction);
+        }
+
+        public override ValueTask<HandlerAction> HandleMeetingStart(IMeetingStartedEvent e)
+        {
+            if (usedProtect)
+            {
+                usedProtect = false;
+                return ValueTask.FromResult(new HandlerAction(ResultTypes.ProtectPlayer, toProtect));
             }
             return ValueTask.FromResult(new HandlerAction(ResultTypes.NoAction));
         }

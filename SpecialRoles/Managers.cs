@@ -32,7 +32,6 @@ namespace Managers.Roles
             PlayerRoles = new Dictionary<int, InnerPlayerControlRole>();
         }
 
-        //public async void RegisterRole(IInnerPlayerControl parentPlayerControl, RoleTypes playerRoleType)
         public async void RegisterRole(IClientPlayer parentPlayer, RoleTypes playerRoleType)
         {
             String roleMessage = "";
@@ -87,6 +86,10 @@ namespace Managers.Roles
                     role = new Lightkeeper(parentPlayer.Character);
                     roleMessage = "You are a lightkeeper. \nWhen you die, you will cast the next meeting into darkness";
                     break;
+                case RoleTypes.Doctor:
+                    role = new Doctor(parentPlayer.Character);
+                    roleMessage = "You are a doctor. \nYou may protect 1 player every round with /protect";
+                    break;
                 default:
                     role = new Crew(parentPlayer.Character);
                     break;
@@ -133,6 +136,9 @@ namespace Managers.Roles
             {
                 case ResultTypes.KillExilePlayer:
                     await handleKillExile(PlayerRoles[handlerResult.AffectedClientID]);
+                    break;
+                case ResultTypes.ProtectPlayer:
+                    handleProtectPlayer(PlayerRoles[handlerResult.AffectedClientID]);
                     break;
                 default:
                     break;
