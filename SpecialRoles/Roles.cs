@@ -29,7 +29,8 @@ namespace Roles
         ConfusedCop,
         Oracle,
         Lightkeeper,
-        Doctor
+        Doctor,
+        Arsonist
     }
 
     public enum ListenerTypes
@@ -39,7 +40,8 @@ namespace Roles
         OnPlayerVoted,
         OnMeetingStarted,
         OnMeetingEnded,
-        OnPlayerMurder
+        OnPlayerMurder,
+        OnPlayerMovement
     }
 
     public enum ResultTypes
@@ -53,11 +55,11 @@ namespace Roles
     public class HandlerAction
     {
         public ResultTypes Action { get; set; }
-        public int AffectedClientID { get; set; }
-        public HandlerAction(ResultTypes playerAction, int affectedClient = -3)
+        public ICollection<int>? AffectedPlayers { get; set; }
+        public HandlerAction(ResultTypes playerAction, List<int>? affectedClient = null)
         {
             Action = playerAction;
-            AffectedClientID = affectedClient;
+            AffectedPlayers = affectedClient;
         }
     }
 
@@ -201,6 +203,11 @@ namespace Roles
         }
 
         public virtual ValueTask<HandlerAction> HandlePlayerMurder(IPlayerMurderEvent e)
+        {
+            return ValueTask.FromResult(new HandlerAction(ResultTypes.NoAction));
+        }
+
+        public virtual ValueTask<HandlerAction> HandlePlayerMovement(IPlayerMovementEvent e)
         {
             return ValueTask.FromResult(new HandlerAction(ResultTypes.NoAction));
         }

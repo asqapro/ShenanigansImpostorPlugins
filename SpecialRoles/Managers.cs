@@ -21,6 +21,7 @@ namespace Managers.Roles
         void HandleEvent(IMeetingStartedEvent e);
         void HandleEvent(IMeetingEndedEvent e);
         void HandleEvent(IPlayerMurderEvent e);
+        void HandleEvent(IPlayerMovementEvent e);
     }
 
     public class RolesManager : IRolesManager
@@ -90,6 +91,10 @@ namespace Managers.Roles
                     role = new Doctor(parentPlayer.Character);
                     roleMessage = "You are a doctor. \nYou may protect 1 player every round with /protect";
                     break;
+                case RoleTypes.Arsonist:
+                    role = new Arsonist(parentPlayer.Character);
+                    roleMessage = "You are an arsonist. \nYou may douse 1 player a round by touching them, then ignite all doused players using /ignite";
+                    break;
                 default:
                     role = new Crew(parentPlayer.Character);
                     break;
@@ -129,20 +134,27 @@ namespace Managers.Roles
 
         private async ValueTask parseResult(HandlerAction handlerResult)
         {
-            if (handlerResult.Action != ResultTypes.NoAction && handlerResult.AffectedClientID == -3)
+            if (handlerResult.Action == ResultTypes.NoAction)
             {
                 return;
             }
-            switch (handlerResult.Action)
+            if (handlerResult.AffectedPlayers == null)
             {
-                case ResultTypes.KillExilePlayer:
-                    await handleKillExile(PlayerRoles[handlerResult.AffectedClientID]);
-                    break;
-                case ResultTypes.ProtectPlayer:
-                    handleProtectPlayer(PlayerRoles[handlerResult.AffectedClientID]);
-                    break;
-                default:
-                    break;
+                return;
+            }
+            foreach (var player in handlerResult.AffectedPlayers)
+            {
+                switch (handlerResult.Action)
+                {
+                    case ResultTypes.KillExilePlayer:
+                        await handleKillExile(PlayerRoles[player]);
+                        break;
+                    case ResultTypes.ProtectPlayer:
+                        handleProtectPlayer(PlayerRoles[player]);
+                        break;
+                    default:
+                        break;
+                }
             }
         }
 
@@ -213,6 +225,22 @@ namespace Managers.Roles
                 if (player.Value._listeners.Contains(ListenerTypes.OnPlayerMurder))
                 {
                     HandlerAction handlerResult = await player.Value.HandlePlayerMurder(e);
+                    await parseResult(handlerResult);
+                }
+            }
+        }
+
+        public async void HandleEvent(IPlayerMovementEvent e)
+        {
+            if (e.PlayerControl == null || e.ClientPlayer == null)
+            {
+                return;
+            }
+            foreach(var player in PlayerRoles)
+            {
+                if (player.Value._listeners.Contains(ListenerTypes.OnPlayerMovement))
+                {
+                    HandlerAction handlerResult = await player.Value.HandlePlayerMovement(e);
                     await parseResult(handlerResult);
                 }
             }

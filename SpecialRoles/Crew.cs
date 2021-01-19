@@ -93,7 +93,6 @@ namespace Roles.Crew
                 await lawResponse("You have no bullets left");
                 return;
             }
-            //await toShoot.SetExiledAsync();
             ammo--;
             if (!toShoot.PlayerInfo.IsImpostor)
             {
@@ -115,7 +114,7 @@ namespace Roles.Crew
                         if (player.Character.PlayerInfo.PlayerName == parsedCommand.Groups[1].Value)
                         {
                             await shootPlayer(player.Character);
-                            return new HandlerAction(ResultTypes.KillExilePlayer, player.Client.Id);
+                            return new HandlerAction(ResultTypes.KillExilePlayer, new List<int> {player.Client.Id});
                         }
                     }
                 }
@@ -515,7 +514,7 @@ namespace Roles.Crew
             if (usedProtect)
             {
                 usedProtect = false;
-                return ValueTask.FromResult(new HandlerAction(ResultTypes.ProtectPlayer, toProtect));
+                return ValueTask.FromResult(new HandlerAction(ResultTypes.ProtectPlayer, new List<int> {toProtect}));
             }
             return ValueTask.FromResult(new HandlerAction(ResultTypes.NoAction));
         }
