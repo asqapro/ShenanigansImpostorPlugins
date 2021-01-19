@@ -44,42 +44,39 @@ namespace Roles
     public enum ResultTypes
     {
         NoAction,
-        KilledPlayer
+        KillExilePlayer,
+        KillMurderPlayer
     }
 
     public class HandlerAction
     {
-        public ResultTypes Action;
-        public String? AffectedPlayer;
+        public ResultTypes Action { get; set; }
+        public int AffectedClientID { get; set; }
+        public HandlerAction(ResultTypes playerAction, int affectedClient = -3)
+        {
+            Action = playerAction;
+            AffectedClientID = affectedClient;
+        }
     }
 
-    public abstract class InnerPlayerControlRole : IInnerPlayerControl
+    public class InnerPlayerControlRole : IInnerPlayerControl
     {
-        protected IInnerPlayerControl _player;
+        protected IInnerPlayerControl _player { get; set; }
         public byte PlayerId { get; private set; }
         public uint NetId { get; }
-
         public int OwnerId { get; }
-
         IInnerPlayerPhysics IInnerPlayerControl.Physics => Physics;
-
         IInnerCustomNetworkTransform IInnerPlayerControl.NetworkTransform => NetworkTransform;
-
         IInnerPlayerInfo IInnerPlayerControl.PlayerInfo => PlayerInfo;
-
         IInnerPlayerPhysics Physics { get; }
-
         IInnerCustomNetworkTransform NetworkTransform { get; }
-
         IInnerPlayerInfo PlayerInfo { get; }
-
-        public HashSet<ListenerTypes> _listeners {get; set;}
-        public static int TotalAllowed {get; set;}
-        public RoleTypes RoleType {get; set;}
-
-        public HandlerAction? HandlerResult;
-        protected MemoryStream? preEditOptionsStream;
-        protected BinaryWriter? preEditOptionsWriter;
+        public HashSet<ListenerTypes> _listeners { get; set; }
+        public static int TotalAllowed { get; set; }
+        public RoleTypes RoleType { get; set; }
+        protected MemoryStream? preEditOptionsStream { get; set; }
+        protected BinaryWriter? preEditOptionsWriter {get; set; }
+        public bool PreventNextDeath { get; set; }
 
         public InnerPlayerControlRole(IInnerPlayerControl parent)
         {
@@ -88,6 +85,7 @@ namespace Roles
             Physics = parent.Physics;
             NetworkTransform = parent.NetworkTransform;
             PlayerInfo = parent.PlayerInfo;
+            PreventNextDeath = false;
         }
 
         public async ValueTask SetNameAsync(string name)
@@ -177,32 +175,32 @@ namespace Roles
 
         public virtual ValueTask<HandlerAction> HandlePlayerChat(IPlayerChatEvent e)
         {
-            return ValueTask.FromResult(new HandlerAction());
+            return ValueTask.FromResult(new HandlerAction(ResultTypes.NoAction));
         }
 
         public virtual ValueTask<HandlerAction> HandlePlayerExile(IPlayerExileEvent e)
         {
-            return ValueTask.FromResult(new HandlerAction());
+            return ValueTask.FromResult(new HandlerAction(ResultTypes.NoAction));
         }
 
         public virtual ValueTask<HandlerAction> HandlePlayerVote(IPlayerVotedEvent e)
         {
-            return ValueTask.FromResult(new HandlerAction());
+            return ValueTask.FromResult(new HandlerAction(ResultTypes.NoAction));
         }
 
         public virtual ValueTask<HandlerAction> HandleMeetingStart(IMeetingStartedEvent e)
         {
-            return ValueTask.FromResult(new HandlerAction());
+            return ValueTask.FromResult(new HandlerAction(ResultTypes.NoAction));
         }
 
         public virtual ValueTask<HandlerAction> HandleMeetingEnd(IMeetingEndedEvent e)
         {
-            return ValueTask.FromResult(new HandlerAction());
+            return ValueTask.FromResult(new HandlerAction(ResultTypes.NoAction));
         }
 
         public virtual ValueTask<HandlerAction> HandlePlayerMurder(IPlayerMurderEvent e)
         {
-            return ValueTask.FromResult(new HandlerAction());
+            return ValueTask.FromResult(new HandlerAction(ResultTypes.NoAction));
         }
     }
 }

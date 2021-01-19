@@ -56,8 +56,7 @@ namespace Roles.Crew
                     }
                 }
             }
-            return new HandlerAction();
-            //return new HandlerAction("", ResultTypes.NoAction);
+            return new HandlerAction(ResultTypes.NoAction);
         }
     }
 
@@ -116,14 +115,12 @@ namespace Roles.Crew
                         if (player.Character.PlayerInfo.PlayerName == parsedCommand.Groups[1].Value)
                         {
                             await shootPlayer(player.Character);
-                            return new HandlerAction();
-                            //return new HandlerAction(player.Character.PlayerInfo.PlayerName, ResultTypes.KilledPlayer);
+                            return new HandlerAction(ResultTypes.KillExilePlayer, player.Client.Id);
                         }
                     }
                 }
             }
-            return new HandlerAction();
-            //return new HandlerAction("", ResultTypes.NoAction);
+            return new HandlerAction(ResultTypes.NoAction);
         }
     }
 
@@ -172,15 +169,13 @@ namespace Roles.Crew
                     }
                 }
             }
-            return new HandlerAction();
-            //return new HandlerAction("", ResultTypes.NoAction);
+            return new HandlerAction(ResultTypes.NoAction);
         }
 
         public override ValueTask<HandlerAction> HandleMeetingEnd(IMeetingEndedEvent e)
         {
             usedInvestigate = false;
-            return ValueTask.FromResult(new HandlerAction());
-            //return ValueTask.FromResult(new HandlerAction("", ResultTypes.NoAction));
+            return ValueTask.FromResult(new HandlerAction(ResultTypes.NoAction));
         }
     }
 
@@ -229,15 +224,13 @@ namespace Roles.Crew
                     }
                 }
             }
-            return new HandlerAction();
-            //return new HandlerAction("", ResultTypes.NoAction);
+            return new HandlerAction(ResultTypes.NoAction);
         }
 
         public override ValueTask<HandlerAction> HandleMeetingEnd(IMeetingEndedEvent e)
         {
             usedInvestigate = false;
-            return ValueTask.FromResult(new HandlerAction());
-            //return ValueTask.FromResult(new HandlerAction("", ResultTypes.NoAction));
+            return ValueTask.FromResult(new HandlerAction(ResultTypes.NoAction));
         }
     }
     public class ConfusedCop : InnerPlayerControlRole
@@ -286,15 +279,13 @@ namespace Roles.Crew
                     }
                 }
             }
-            return new HandlerAction();
-            //return new HandlerAction("", ResultTypes.NoAction);
+            return new HandlerAction(ResultTypes.NoAction);
         }
 
         public override ValueTask<HandlerAction> HandleMeetingEnd(IMeetingEndedEvent e)
         {
             usedInvestigate = false;
-            return ValueTask.FromResult(new HandlerAction());
-            //return ValueTask.FromResult(new HandlerAction("", ResultTypes.NoAction));
+            return ValueTask.FromResult(new HandlerAction(ResultTypes.NoAction));
         }
     }
 
@@ -340,15 +331,13 @@ namespace Roles.Crew
                     }
                 }
             }
-            return new HandlerAction();
-            //return new HandlerAction("", ResultTypes.NoAction);
+            return new HandlerAction(ResultTypes.NoAction);
         }
 
         public override ValueTask<HandlerAction> HandleMeetingEnd(IMeetingEndedEvent e)
         {
             usedReveal = false;
-            return ValueTask.FromResult(new HandlerAction());
-            //return ValueTask.FromResult(new HandlerAction("", ResultTypes.NoAction));
+            return ValueTask.FromResult(new HandlerAction(ResultTypes.NoAction));
         }
 
         private async ValueTask revealOnDeath(IEnumerable<IClientPlayer> players)
@@ -387,8 +376,7 @@ namespace Roles.Crew
             {
                 await revealOnDeath(e.Game.Players);
             }
-            return new HandlerAction();
-            //return new HandlerAction("", ResultTypes.NoAction);
+            return new HandlerAction(ResultTypes.NoAction);
         }
 
         public override async ValueTask<HandlerAction> HandlePlayerMurder(IPlayerMurderEvent e)
@@ -397,8 +385,7 @@ namespace Roles.Crew
             {
                 await revealOnDeath(e.Game.Players);
             }
-            return new HandlerAction();
-            //return new HandlerAction("", ResultTypes.NoAction);
+            return new HandlerAction(ResultTypes.NoAction);
         }
     }
 
@@ -429,8 +416,7 @@ namespace Roles.Crew
             {
                 extinguishLight = true;
             }
-            return ValueTask.FromResult(new HandlerAction());
-            //return ValueTask.FromResult(new HandlerAction("", ResultTypes.NoAction));
+            return ValueTask.FromResult(new HandlerAction(ResultTypes.NoAction));
         }
 
         public override ValueTask<HandlerAction> HandlePlayerExile(IPlayerExileEvent e)
@@ -439,8 +425,7 @@ namespace Roles.Crew
             {
                 extinguishLight = true;
             }
-            return ValueTask.FromResult(new HandlerAction());
-            //return ValueTask.FromResult(new HandlerAction("", ResultTypes.NoAction));
+            return ValueTask.FromResult(new HandlerAction(ResultTypes.NoAction));
         }
 
         public override ValueTask<HandlerAction> HandleMeetingStart(IMeetingStartedEvent e)
@@ -459,8 +444,7 @@ namespace Roles.Crew
                     player.Character.SetColorAsync(ColorType.Black);
                 }
             }
-            return ValueTask.FromResult(new HandlerAction());
-            //return ValueTask.FromResult(new HandlerAction("", ResultTypes.NoAction));
+            return ValueTask.FromResult(new HandlerAction(ResultTypes.NoAction));
         }
 
         public override ValueTask<HandlerAction> HandleMeetingEnd(IMeetingEndedEvent e)
@@ -478,8 +462,7 @@ namespace Roles.Crew
                 extinguishLight = false;
                 lightExtinguished = false;
             }
-            return ValueTask.FromResult(new HandlerAction());
-            //return ValueTask.FromResult(new HandlerAction("", ResultTypes.NoAction));
+            return ValueTask.FromResult(new HandlerAction(ResultTypes.NoAction));
         }
     }
 }

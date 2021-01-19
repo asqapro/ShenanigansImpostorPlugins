@@ -90,13 +90,13 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
                 if (playerInfo.IsImpostor)
                 {
                     RoleTypes randImpostorRole = impostorRoles[rng.Next(0, impostorRoles.Count)];
-                    _manager[e.Game.Code].RegisterRole(player.Character, randImpostorRole);
+                    _manager[e.Game.Code].RegisterRole(player.Client.Player, randImpostorRole);
                     _logger.LogInformation($"{playerInfo.PlayerName} is a {randImpostorRole.ToString()}");
                 }
                 else
                 {
                     RoleTypes randCrewRole = crewNeutralRoles[rng.Next(0, crewNeutralRoles.Count)];
-                    _manager[e.Game.Code].RegisterRole(player.Character, randCrewRole);
+                    _manager[e.Game.Code].RegisterRole(player.Client.Player, randCrewRole);
                     _logger.LogInformation($"{playerInfo.PlayerName} is a {randCrewRole.ToString()}");
                 }
             }

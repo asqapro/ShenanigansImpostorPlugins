@@ -62,8 +62,7 @@ namespace Roles.Evil
                             if (ammo > 0)
                             {
                                 await silentKillPlayer(player.Character);
-                                return new HandlerAction();
-                                //return new Tuple<String, ResultTypes>(player.Character.PlayerInfo.PlayerName, ResultTypes.KilledPlayer);
+                                return new HandlerAction(ResultTypes.KillExilePlayer, player.Client.Id);
                             }
                             else
                             {
@@ -74,8 +73,7 @@ namespace Roles.Evil
                     }
                 }
             }
-            return new HandlerAction();
-            //return new Tuple<String, ResultTypes>("", ResultTypes.NoAction);
+            return new HandlerAction(ResultTypes.NoAction);
         }
     }
 
@@ -131,8 +129,7 @@ namespace Roles.Evil
                         if (killWord != "" || killTarget != "")
                         {
                             await evilResponse("Kill target and word have already been set, you cannot change them");
-                            return new HandlerAction();
-                            //return new Tuple<String, ResultTypes>("", ResultTypes.NoAction);
+                            return new HandlerAction(ResultTypes.NoAction);
                         }
                         bool foundPlayer = false;
                         foreach (var player in e.Game.Players)
@@ -146,15 +143,13 @@ namespace Roles.Evil
                         if (!foundPlayer)
                         {
                             await evilResponse("Kill target is a not a player in this game");
-                            return new HandlerAction();
-                            //return new Tuple<String, ResultTypes>("", ResultTypes.NoAction);
+                            return new HandlerAction(ResultTypes.NoAction);
                         }
                         killWord = parsedCommand.Groups[1].Value;
                         killTarget = parsedCommand.Groups[2].Value;
                         await evilResponse("Kill target and word have been set");
                     }
-                    return new HandlerAction();
-                    //return new Tuple<String, ResultTypes>("", ResultTypes.NoAction);
+                    return new HandlerAction(ResultTypes.NoAction);
                 }
             }
             String[] checkWords = e.Message.Split(" ");
@@ -164,12 +159,10 @@ namespace Roles.Evil
                 {
                     await silentKillPlayer(e.PlayerControl);
                     targetKilled = true;
-                    return new HandlerAction();
-                    //return new Tuple<String, ResultTypes>(e.PlayerControl.PlayerInfo.PlayerName, ResultTypes.KilledPlayer);
+                    return new HandlerAction(ResultTypes.KillExilePlayer, e.ClientPlayer.Client.Id);
                 }
             }
-            return new HandlerAction();
-            //return new Tuple<String, ResultTypes>("", ResultTypes.NoAction);
+            return new HandlerAction(ResultTypes.NoAction);
         }
     }
 }

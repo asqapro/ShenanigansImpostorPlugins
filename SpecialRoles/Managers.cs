@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
-using Impostor.Api.Events;
+using System.Threading.Tasks;
 using Impostor.Api.Events.Player;
 using Impostor.Api.Events.Meeting;
+using Impostor.Api.Net;
 using Impostor.Api.Net.Inner.Objects;
 using Roles;
 using Roles.Crew;
@@ -13,7 +14,7 @@ namespace Managers.Roles
 {
     public interface IRolesManager
     {
-        void RegisterRole(IInnerPlayerControl _player, RoleTypes playerRole);
+        void RegisterRole(IClientPlayer parentPlayer, RoleTypes playerRoleType);
         void HandleEvent(IPlayerChatEvent e);
         void HandleEvent(IPlayerExileEvent e);
         void HandleEvent(IPlayerVotedEvent e);
@@ -24,95 +25,128 @@ namespace Managers.Roles
 
     public class RolesManager : IRolesManager
     {
-        ICollection<InnerPlayerControlRole> PlayerRoles;
+        Dictionary<int, InnerPlayerControlRole> PlayerRoles;
 
         public RolesManager()
         {
-            PlayerRoles = new List<InnerPlayerControlRole>();
+            PlayerRoles = new Dictionary<int, InnerPlayerControlRole>();
         }
 
-        public async void RegisterRole(IInnerPlayerControl parentPlayerControl, RoleTypes playerRoleType)
+        //public async void RegisterRole(IInnerPlayerControl parentPlayerControl, RoleTypes playerRoleType)
+        public async void RegisterRole(IClientPlayer parentPlayer, RoleTypes playerRoleType)
         {
             String roleMessage = "";
-            InnerPlayerControlRole role = new Crew(parentPlayerControl);
+            InnerPlayerControlRole role;
             switch (playerRoleType)
             {
                 case RoleTypes.Crew:
-                    role = new Crew(parentPlayerControl);
+                    role = new Crew(parentPlayer.Character);
                     roleMessage = "You are a crewmate. Finish your tasks to win";
                     break;
                 case RoleTypes.Impostor:
-                    role = new Impersonator(parentPlayerControl);
+                    role = new Impersonator(parentPlayer.Character);
                     roleMessage = "You are an impostor. Kill the crew to win";
                     break; 
                 case RoleTypes.Hitman:
-                    role = new Hitman(parentPlayerControl);
+                    role = new Hitman(parentPlayer.Character);
                     roleMessage = "You are a hitman. \nYou may silently kill 1 player using /silentkill";
                     break;
                 case RoleTypes.Jester:
-                    role = new Jester(parentPlayerControl);
+                    role = new Jester(parentPlayer.Character);
                     roleMessage = "You are a jester. \nTrick the crew into voting you out to win";
                     break;
                 case RoleTypes.Medium:
-                    role = new Medium(parentPlayerControl);
+                    role = new Medium(parentPlayer.Character);
                     roleMessage = "You are a medium. \nYou can hear the dead speak";
                     break;
                 case RoleTypes.Sheriff:
-                    role = new Sheriff(parentPlayerControl);
+                    role = new Sheriff(parentPlayer.Character);
                     roleMessage = "You are a sheriff. \nYou may shoot 1 player that you suspect is an impostor, but if you guess wrong, you will also die";
                     break;
                 case RoleTypes.VoodooLady:
-                    role = new VoodooLady(parentPlayerControl);
+                    role = new VoodooLady(parentPlayer.Character);
                     roleMessage = "You are a voodoo lady. \nPick a kill word and target using /setkillword";
                     break;
                 case RoleTypes.Cop:
-                    role = new Cop(parentPlayerControl);
+                    role = new Cop(parentPlayer.Character);
                     roleMessage = "You are a cop. \nYou can find impostors by using /investigate on players";
                     break;
                 case RoleTypes.InsaneCop:
-                    role = new InsaneCop(parentPlayerControl);
+                    role = new InsaneCop(parentPlayer.Character);
                     roleMessage = "You are a cop. \nYou can find impostors by using /investigate on players";
                     break;
                 case RoleTypes.ConfusedCop:
-                    role = new ConfusedCop(parentPlayerControl);
+                    role = new ConfusedCop(parentPlayer.Character);
                     roleMessage = "You are a cop. \nYou can find impostors by using /investigate on players";
                     break;
                 case RoleTypes.Oracle:
-                    role = new Oracle(parentPlayerControl);
+                    role = new Oracle(parentPlayer.Character);
                     roleMessage = "You are an oracle. \nWhen you die, you will reveal the role of the last player you picked using /reveal";
                     break;
                 case RoleTypes.Lightkeeper:
-                    role = new Lightkeeper(parentPlayerControl);
+                    role = new Lightkeeper(parentPlayer.Character);
                     roleMessage = "You are a lightkeeper. \nWhen you die, you will cast the next meeting into darkness";
+                    break;
+                default:
+                    role = new Crew(parentPlayer.Character);
+                    break;
+            }
+
+            PlayerRoles[parentPlayer.Client.Id] = role;
+            
+            var currentName = parentPlayer.Character.PlayerInfo.PlayerName;
+            var currentColor = parentPlayer.Character.PlayerInfo.ColorId;
+            await parentPlayer.Character.SetNameAsync("Server");
+            await parentPlayer.Character.SetColorAsync(Impostor.Api.Innersloth.Customization.ColorType.White);
+
+            await parentPlayer.Character.SendChatToPlayerAsync(roleMessage, parentPlayer.Character);
+
+            await parentPlayer.Character.SetNameAsync(currentName);
+            await parentPlayer.Character.SetColorAsync(currentColor);
+        }
+
+        private async ValueTask handleKillExile(InnerPlayerControlRole toKill)
+        {
+            if (toKill.PreventNextDeath)
+            {
+                toKill.PreventNextDeath = false;
+                return;
+            }
+            else
+            {
+                await toKill.SetExiledAsync();
+            }
+        }
+
+        private void handleProtectPlayer(InnerPlayerControlRole toProtect)
+        {
+            toProtect.PreventNextDeath = true;
+        }
+
+        private async ValueTask parseResult(HandlerAction handlerResult)
+        {
+            if (handlerResult.Action != ResultTypes.NoAction && handlerResult.AffectedClientID == -3)
+            {
+                return;
+            }
+            switch (handlerResult.Action)
+            {
+                case ResultTypes.KillExilePlayer:
+                    await handleKillExile(PlayerRoles[handlerResult.AffectedClientID]);
                     break;
                 default:
                     break;
             }
-
-            PlayerRoles.Add(role);
-            
-            var currentName = parentPlayerControl.PlayerInfo.PlayerName;
-            var currentColor = parentPlayerControl.PlayerInfo.ColorId;
-            await parentPlayerControl.SetNameAsync("Server");
-            await parentPlayerControl.SetColorAsync(Impostor.Api.Innersloth.Customization.ColorType.White);
-
-            await parentPlayerControl.SendChatToPlayerAsync(roleMessage, parentPlayerControl);
-
-            await parentPlayerControl.SetNameAsync(currentName);
-            await parentPlayerControl.SetColorAsync(currentColor);
         }
 
         public async void HandleEvent(IPlayerChatEvent e)
         {
             foreach(var player in PlayerRoles)
             {
-                if (player._listeners.Contains(ListenerTypes.OnPlayerChat))
+                if (player.Value._listeners.Contains(ListenerTypes.OnPlayerChat))
                 {
-                    HandlerAction handlerResult = await (player.HandlePlayerChat(e));
-                    if (handlerResult.Action == ResultTypes.KilledPlayer)
-                    {
-
-                    }
+                    HandlerAction handlerResult = await player.Value.HandlePlayerChat(e);
+                    await parseResult(handlerResult);
                 }
             }
         }
@@ -121,13 +155,10 @@ namespace Managers.Roles
         {
             foreach(var player in PlayerRoles)
             {
-                if (player._listeners.Contains(ListenerTypes.OnPlayerExile))
+                if (player.Value._listeners.Contains(ListenerTypes.OnPlayerExile))
                 {
-                    HandlerAction handlerResult = await (player.HandlePlayerExile(e));
-                    if (handlerResult.Action == ResultTypes.KilledPlayer)
-                    {
-                        
-                    }
+                    HandlerAction handlerResult = await player.Value.HandlePlayerExile(e);
+                    await parseResult(handlerResult);
                 }
             }
         }
@@ -136,13 +167,10 @@ namespace Managers.Roles
         {
             foreach(var player in PlayerRoles)
             {
-                if (player._listeners.Contains(ListenerTypes.OnPlayerVoted))
+                if (player.Value._listeners.Contains(ListenerTypes.OnPlayerVoted))
                 {
-                    HandlerAction handlerResult = await (player.HandlePlayerVote(e));
-                    if (handlerResult.Action == ResultTypes.KilledPlayer)
-                    {
-                        
-                    }
+                    HandlerAction handlerResult = await player.Value.HandlePlayerVote(e);
+                    await parseResult(handlerResult);
                 }
             }
         }
@@ -151,13 +179,10 @@ namespace Managers.Roles
         {
             foreach(var player in PlayerRoles)
             {
-                if (player._listeners.Contains(ListenerTypes.OnMeetingStarted))
+                if (player.Value._listeners.Contains(ListenerTypes.OnMeetingStarted))
                 {
-                    HandlerAction handlerResult = await (player.HandleMeetingStart(e));
-                    if (handlerResult.Action == ResultTypes.KilledPlayer)
-                    {
-                        
-                    }
+                    HandlerAction handlerResult = await player.Value.HandleMeetingStart(e);
+                    await parseResult(handlerResult);
                 }
             }
         }
@@ -166,13 +191,10 @@ namespace Managers.Roles
         {
             foreach(var player in PlayerRoles)
             {
-                if (player._listeners.Contains(ListenerTypes.OnMeetingEnded))
+                if (player.Value._listeners.Contains(ListenerTypes.OnMeetingEnded))
                 {
-                    HandlerAction handlerResult = await (player.HandleMeetingEnd(e));
-                    if (handlerResult.Action == ResultTypes.KilledPlayer)
-                    {
-                        
-                    }
+                    HandlerAction handlerResult = await player.Value.HandleMeetingEnd(e);
+                    await parseResult(handlerResult);
                 }
             }
         }
@@ -181,13 +203,10 @@ namespace Managers.Roles
         {
             foreach(var player in PlayerRoles)
             {
-                if (player._listeners.Contains(ListenerTypes.OnPlayerMurder))
+                if (player.Value._listeners.Contains(ListenerTypes.OnPlayerMurder))
                 {
-                    HandlerAction handlerResult = await (player.HandlePlayerMurder(e));
-                    if (handlerResult.Action == ResultTypes.KilledPlayer)
-                    {
-                        
-                    }
+                    HandlerAction handlerResult = await player.Value.HandlePlayerMurder(e);
+                    await parseResult(handlerResult);
                 }
             }
         }

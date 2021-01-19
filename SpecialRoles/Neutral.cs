@@ -31,8 +31,7 @@ namespace Roles.Neutral
         {
             if (!meetingActive)
             {
-                return ValueTask.FromResult(new HandlerAction());
-                //return ValueTask.FromResult(new Tuple<String, ResultTypes>("", ResultTypes.NoAction));
+                return ValueTask.FromResult(new HandlerAction(ResultTypes.NoAction));
             }
             if(e.VoteType == VoteType.Skip)
             {
@@ -51,16 +50,13 @@ namespace Roles.Neutral
                 }
                 votedOtherCount[votedName]++;
             }
-            return ValueTask.FromResult(new HandlerAction());
-            //return ValueTask.FromResult(new Tuple<String, ResultTypes>("", ResultTypes.NoAction));
+            return ValueTask.FromResult(new HandlerAction(ResultTypes.NoAction));
         }
 
         public override ValueTask<HandlerAction> HandleMeetingStart(IMeetingStartedEvent e)
         {
             meetingActive = true;
-            return ValueTask.FromResult(new HandlerAction());
-            //return ValueTask.FromResult(new Tuple<String, ResultTypes>("", ResultTypes.NoAction));
-
+            return ValueTask.FromResult(new HandlerAction(ResultTypes.NoAction));
         }
 
         public override async ValueTask<HandlerAction> HandleMeetingEnd(IMeetingEndedEvent e)
@@ -104,8 +100,7 @@ namespace Roles.Neutral
 
             votedJesterCount = 0;
             votedSkipCount = 0;
-            return new HandlerAction();
-            //return new Tuple<String, ResultTypes>("", ResultTypes.NoAction);
+            return new HandlerAction(ResultTypes.NoAction);
         }
     }
 }
