@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Numerics;
+using System.Timers;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Impostor.Api.Games;
@@ -19,7 +20,6 @@ namespace Impostor.Plugins.Infected.Handlers
         private Dictionary<GameCode, HashSet<IClientPlayer>> infected;
         private Dictionary<GameCode, MemoryStream> preEditOptionsStream;
         private BinaryWriter preEditOptionsWriter;
-
         public GameEventListener(ILogger<Infected> logger)
         {
             _logger = logger;
@@ -29,6 +29,11 @@ namespace Impostor.Plugins.Infected.Handlers
 
         private void setInfected(IClientPlayer toInfect, IGame game)
         {
+            if (toInfect == null)
+            {
+                return;
+            }
+            toInfect.Character.SetAllTasksCompleteAsync();
             toInfect.Character.SetNameAsync("Infected");
             toInfect.Character.SetHatAsync(84);
             toInfect.Character.SetColorAsync(2);
@@ -74,16 +79,24 @@ namespace Impostor.Plugins.Infected.Handlers
 
             var rng = new Random();
             var initialInfectedPlayer = rng.Next(0, e.Game.PlayerCount);
+            IClientPlayer toInfect = null;
             var playerIdx = 0;
             foreach (var player in e.Game.Players)
             {
                 if (playerIdx == initialInfectedPlayer)
                 {
-                    setInfected(player.Client.Player, e.Game);
+                    //setInfected(player.Client.Player, e.Game);
+                    toInfect = player.Client.Player;
                     break;
                 }
                 playerIdx++;
             }
+
+            var infectionDelay = 15000;
+            Timer infectionTimer = new Timer(infectionDelay);
+            infectionTimer.AutoReset = false;
+            infectionTimer.Elapsed += delegate { setInfected(toInfect, e.Game); };
+            infectionTimer.Enabled = true;
         }
 
         [EventListener]
