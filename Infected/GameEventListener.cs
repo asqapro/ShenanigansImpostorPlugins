@@ -41,9 +41,9 @@ namespace Impostor.Plugins.Infected.Handlers
             infected[game.Code].Add(toInfect);
 
             var moddedOptions = game;
-            moddedOptions.Options.CrewLightMod = 0.25f;
-            moddedOptions.Options.ImpostorLightMod = 0.25f;
-            moddedOptions.Options.PlayerSpeedMod = 1.25f;
+            moddedOptions.Options.CrewLightMod = 0.1f;
+            moddedOptions.Options.ImpostorLightMod = 0.1f;
+            //moddedOptions.Options.PlayerSpeedMod = 1.25f;
             moddedOptions.SyncSettingsToAsync(toInfect);
         }
 
@@ -77,19 +77,14 @@ namespace Impostor.Plugins.Infected.Handlers
             e.Game.Options.PlayerSpeedMod = 2.0f;
             e.Game.SyncSettingsAsync();
 
-            var rng = new Random();
-            var initialInfectedPlayer = rng.Next(0, e.Game.PlayerCount);
             IClientPlayer toInfect = null;
-            var playerIdx = 0;
             foreach (var player in e.Game.Players)
             {
-                if (playerIdx == initialInfectedPlayer)
+                if (player.Character.PlayerInfo.IsImpostor)
                 {
-                    //setInfected(player.Client.Player, e.Game);
                     toInfect = player.Client.Player;
                     break;
                 }
-                playerIdx++;
             }
 
             var infectionDelay = 15000;

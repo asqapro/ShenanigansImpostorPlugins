@@ -50,7 +50,7 @@ namespace GameOptionsSaverLoader
         public load() : base()
         {
             commandParsePattern = @"^/load (\w+\.bin)$";
-            Help = "/load <filename>";
+            Help = "/load <filename>.bin";
             HostOnly = true;
             Enabled = true;
             Names = new List<String> {"/load"};
@@ -65,7 +65,7 @@ namespace GameOptionsSaverLoader
                 return ValidateResult.MissingTarget;
             }
 
-            var target = match.Groups[2].Value;
+            var target = match.Groups[1].Value;
 
             if (File.Exists($"{target}"))
             {
