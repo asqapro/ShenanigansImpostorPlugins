@@ -47,9 +47,9 @@ namespace Roles
     public enum ResultTypes
     {
         NoAction,
-        KillExilePlayer,
-        KillMurderPlayer,
-        ProtectPlayer
+        KillExile,
+        KillMurder,
+        Protect,
     }
 
     public class HandlerAction
@@ -155,6 +155,11 @@ namespace Roles
         public async ValueTask SetExiledAsync()
         {
             await _player.SetExiledAsync();
+        }
+
+        public async ValueTask SetAllTasksCompleteAsync()
+        {
+            await _player.SetAllTasksCompleteAsync();
         }
 
         protected void saveSettings(IGameEvent e)

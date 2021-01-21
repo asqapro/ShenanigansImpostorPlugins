@@ -30,28 +30,22 @@ namespace Roles.Evil
             ammo = 1;
         }
 
-        private async ValueTask evilResponse(String message)
+        private async ValueTask<List<int>> silentKillPlayer(IInnerPlayerControl toShoot)
         {
-            var currentName = _player.PlayerInfo.PlayerName;
-            var currentColor = _player.PlayerInfo.ColorId;
-
-            await _player.SetNameAsync("Evil");
-            await _player.SetColorAsync(Impostor.Api.Innersloth.Customization.ColorType.Red);
-
-            await _player.SendChatToPlayerAsync(message, _player);
-
-            await _player.SetNameAsync(currentName);
-            await _player.SetColorAsync(currentColor);
-        }
-
-        private void silentKillPlayer(IInnerPlayerControl toShoot)
-        {
+            var toKill = new List<int>();
+            if (ammo < 1)
+            {
+                await _player.SendChatToPlayerAsync("You have no bullets left", _player);
+                return toKill;
+            }
             ammo--;
+            toKill.Add(toShoot.OwnerId);
+            return toKill;
         }
 
         public override async ValueTask<HandlerAction> HandlePlayerChat(IPlayerChatEvent e)
         {
-            if (e.Message.StartsWith("/") && e.PlayerControl.PlayerInfo.PlayerName == _player.PlayerInfo.PlayerName)
+            if (e.Message.StartsWith("/") && e.ClientPlayer.Client.Id == _player.OwnerId)
             {
                 String commandParsePattern = @"/silentkill ((?:\w\s?)+)";
                 var parsedCommand = Regex.Match(e.Message, commandParsePattern);
@@ -61,16 +55,12 @@ namespace Roles.Evil
                     {
                         if (player.Character.PlayerInfo.PlayerName == parsedCommand.Groups[1].Value)
                         {
-                            if (ammo > 0)
+                            var toKill = await silentKillPlayer(player.Character);
+                            if (toKill.Count > 0)
                             {
-                                silentKillPlayer(player.Character);
-                                return new HandlerAction(ResultTypes.KillExilePlayer, new List<int> {player.Client.Id});
+                                return new HandlerAction(ResultTypes.KillExile, toKill);
                             }
-                            else
-                            {
-                                await evilResponse("You have no bullets left");
-                            }
-                            break;
+                            return new HandlerAction(ResultTypes.NoAction);
                         }
                     }
                 }
@@ -83,7 +73,7 @@ namespace Roles.Evil
     {
         public new static int TotalAllowed = 1;
         private String killWord;
-        private String killTarget;
+        private int killTarget;
         private bool targetKilled;
 
         public VoodooLady(IInnerPlayerControl parent) : base(parent)
@@ -91,25 +81,11 @@ namespace Roles.Evil
             _listeners.Add(ListenerTypes.OnPlayerChat);
             RoleType = RoleTypes.VoodooLady;
             killWord = "";
-            killTarget = "";
+            killTarget = -3;
             targetKilled = false;
         }
 
-        private async ValueTask evilResponse(String message)
-        {
-            var currentName = _player.PlayerInfo.PlayerName;
-            var currentColor = _player.PlayerInfo.ColorId;
-
-            await _player.SetNameAsync("Evil");
-            await _player.SetColorAsync(Impostor.Api.Innersloth.Customization.ColorType.Red);
-
-            await _player.SendChatToPlayerAsync(message, _player);
-
-            await _player.SetNameAsync(currentName);
-            await _player.SetColorAsync(currentColor);
-        }
-
-        private async ValueTask silentKillPlayer(IInnerPlayerControl toKill)
+        private async ValueTask voodooPlayer(IInnerPlayerControl toKill)
         {
             var currentName = _player.PlayerInfo.PlayerName;
             await _player.SetNameAsync($"{currentName} (Voodoo Lady)");
@@ -119,48 +95,45 @@ namespace Roles.Evil
 
         public override async ValueTask<HandlerAction> HandlePlayerChat(IPlayerChatEvent e)
         {
-            if (e.Message.StartsWith("/"))
+            if (e.Message.StartsWith("/") && e.ClientPlayer.Client.Id == _player.OwnerId)
             {
-                if (e.PlayerControl.PlayerInfo.PlayerName == _player.PlayerInfo.PlayerName)
+                String commandParsePattern = @"/setkillword (\w+) '((?:\w\s?)+)'";
+                var parsedCommand = Regex.Match(e.Message, commandParsePattern);
+                if (parsedCommand.Success && !_player.PlayerInfo.IsDead)
                 {
-                    String commandParsePattern = @"/setkillword (\w+) '((?:\w\s?)+)'";
-                    var parsedCommand = Regex.Match(e.Message, commandParsePattern);
-                    if (parsedCommand.Success && !_player.PlayerInfo.IsDead)
+                    if (killWord != "" && killTarget != -3)
                     {
-                        if (killWord != "" || killTarget != "")
-                        {
-                            await evilResponse("Kill target and word have already been set, you cannot change them");
-                            return new HandlerAction(ResultTypes.NoAction);
-                        }
-                        bool foundPlayer = false;
-                        foreach (var player in e.Game.Players)
-                        {
-                            if (player.Character.PlayerInfo.PlayerName == parsedCommand.Groups[2].Value)
-                            {
-                                foundPlayer = true;
-                                break;
-                            }
-                        }
-                        if (!foundPlayer)
-                        {
-                            await evilResponse("Kill target is a not a player in this game");
-                            return new HandlerAction(ResultTypes.NoAction);
-                        }
-                        killWord = parsedCommand.Groups[1].Value;
-                        killTarget = parsedCommand.Groups[2].Value;
-                        await evilResponse("Kill target and word have been set");
+                        await _player.SendChatToPlayerAsync("Kill target and word have already been set, you cannot change them", _player);
+                        return new HandlerAction(ResultTypes.NoAction);
                     }
-                    return new HandlerAction(ResultTypes.NoAction);
+                    bool foundPlayer = false;
+                    foreach (var player in e.Game.Players)
+                    {
+                        if (player.Character.PlayerInfo.PlayerName == parsedCommand.Groups[2].Value)
+                        {
+                            killTarget = player.Client.Id;
+                            foundPlayer = true;
+                            break;
+                        }
+                    }
+                    if (!foundPlayer)
+                    {
+                        await _player.SendChatToPlayerAsync("Kill target is a not a player in this game", _player);
+                        return new HandlerAction(ResultTypes.NoAction);
+                    }
+                    killWord = parsedCommand.Groups[1].Value;
+                    await _player.SendChatToPlayerAsync("Kill target and word have been set", _player);
                 }
+                return new HandlerAction(ResultTypes.NoAction);
             }
             String[] checkWords = e.Message.Split(" ");
-            if ((checkWords.Contains(killWord) || checkWords.Contains($"'{killWord}'")) && e.PlayerControl.PlayerInfo.PlayerName == killTarget)
+            if ((checkWords.Contains(killWord) || checkWords.Contains($"'{killWord}'")) && e.PlayerControl.OwnerId == killTarget)
             {
                 if (!targetKilled)
                 {
-                    await silentKillPlayer(e.PlayerControl);
+                    await voodooPlayer(e.PlayerControl);
                     targetKilled = true;
-                    return new HandlerAction(ResultTypes.KillExilePlayer, new List<int> {e.ClientPlayer.Client.Id});
+                    return new HandlerAction(ResultTypes.KillExile, new List<int> {e.ClientPlayer.Client.Id});
                 }
             }
             return new HandlerAction(ResultTypes.NoAction);
@@ -185,24 +158,21 @@ namespace Roles.Evil
 
         public override async ValueTask<HandlerAction> HandlePlayerChat(IPlayerChatEvent e)
         {
-            if (e.Message.StartsWith("/"))
+            if (e.Message.StartsWith("/") && e.ClientPlayer.Client.Id == _player.OwnerId)
             {
-                if (e.PlayerControl.PlayerInfo.PlayerName == _player.PlayerInfo.PlayerName)
+                String commandParsePattern = @"/ignite";
+                var parsedCommand = Regex.Match(e.Message, commandParsePattern);
+                if (parsedCommand.Success && !_player.PlayerInfo.IsDead)
                 {
-                    String commandParsePattern = @"/ignite";
-                    var parsedCommand = Regex.Match(e.Message, commandParsePattern);
-                    if (parsedCommand.Success && !_player.PlayerInfo.IsDead)
+                    List<int> toKill = new List<int>();
+                    foreach (var doused in dousedPlayers)
                     {
-                        List<int> toKill = new List<int>();
-                        foreach (var doused in dousedPlayers)
-                        {
-                            Console.WriteLine($"Adding ID to douse: {doused.OwnerId}");
-                            toKill.Add(doused.OwnerId);
-                            await _player.SendChatToPlayerAsync("You have been ignited", doused);
-                        }
-                        await _player.SendChatToPlayerAsync("You have ignited your targets");
-                        return new HandlerAction(ResultTypes.KillExilePlayer, toKill);
+                        toKill.Add(doused.OwnerId);
+                        await _player.SendChatToPlayerAsync("You have been ignited", doused);
                     }
+                    dousedPlayers.Clear();
+                    await _player.SendChatToPlayerAsync("You have ignited your targets", _player);
+                    return new HandlerAction(ResultTypes.KillExile, toKill);
                 }
             }
             return new HandlerAction(ResultTypes.NoAction);
@@ -221,7 +191,7 @@ namespace Roles.Evil
                     continue;
                 }
                 var distance = Vector2.Distance(_player.NetworkTransform.Position, otherPlayer.Character.NetworkTransform.Position);
-                if (distance < 0.6 && !dousedPlayer && dousedPlayers.Count < 3)
+                if (distance < 0.6 && !dousedPlayer && dousedPlayers.Count < 2)
                 {
                     dousedPlayers.Add(otherPlayer.Character);
                     dousedPlayer = true;

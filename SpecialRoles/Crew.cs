@@ -17,6 +17,7 @@ namespace Roles.Crew
             RoleType = RoleTypes.Crew;
         }
     }
+
     public class Medium : InnerPlayerControlRole
     {
         public new static int TotalAllowed = 2;
@@ -27,34 +28,27 @@ namespace Roles.Crew
             RoleType = RoleTypes.Medium;
         }
 
-        private async ValueTask hearDead(IInnerPlayerControl deadSender, IInnerPlayerControl aliveSender, IInnerPlayerControl mediumReceiver, String message)
+        private async ValueTask hearDead(IInnerPlayerControl deadSender, IInnerPlayerControl mediumReceiver, String message)
         {
             var deadName = deadSender.PlayerInfo.PlayerName;
             var deadColor = deadSender.PlayerInfo.ColorId;
-            var currentName = aliveSender.PlayerInfo.PlayerName;
-            var currentColor = aliveSender.PlayerInfo.ColorId;
+            var currentName = mediumReceiver.PlayerInfo.PlayerName;
+            var currentColor = mediumReceiver.PlayerInfo.ColorId;
 
-            await aliveSender.SetNameAsync($"{deadName} (dead)");
-            await aliveSender.SetColorAsync(deadColor);
+            await mediumReceiver.SetNameAsync($"{deadName} (dead)");
+            await mediumReceiver.SetColorAsync(deadColor);
 
-            await aliveSender.SendChatToPlayerAsync($"[0000ffff]{message}[]", mediumReceiver);
+            await mediumReceiver.SendChatToPlayerAsync($"[0000ffff]{message}[]", mediumReceiver);
 
-            await aliveSender.SetNameAsync(currentName);
-            await aliveSender.SetColorAsync(currentColor);
+            await mediumReceiver.SetNameAsync(currentName);
+            await mediumReceiver.SetColorAsync(currentColor);
         }
 
         public override async ValueTask<HandlerAction> HandlePlayerChat(IPlayerChatEvent e)
         {
-            if (e.PlayerControl.PlayerInfo.IsDead)
+            if (e.PlayerControl.PlayerInfo.IsDead && e.ClientPlayer.Client.Id != _player.OwnerId)
             {
-                foreach (var player in e.Game.Players)
-                {
-                    if (!player.Character.PlayerInfo.IsDead && player.Character.PlayerInfo.PlayerName != _player.PlayerInfo.PlayerName)
-                    {
-                        await hearDead(e.ClientPlayer.Character, player.Character, _player, e.Message);
-                        break;
-                    }
-                }
+                await hearDead(e.ClientPlayer.Character, _player, e.Message);
             }
             return new HandlerAction(ResultTypes.NoAction);
         }
@@ -72,38 +66,27 @@ namespace Roles.Crew
             ammo = 1;
         }
 
-        private async ValueTask lawResponse(String message)
+        private async ValueTask<List<int>> shootPlayer(IInnerPlayerControl toShoot)
         {
-            var currentName = _player.PlayerInfo.PlayerName;
-            var currentColor = _player.PlayerInfo.ColorId;
-
-            await _player.SetNameAsync("The Law");
-            await _player.SetColorAsync(Impostor.Api.Innersloth.Customization.ColorType.Red);
-
-            await _player.SendChatToPlayerAsync(message, _player);
-
-            await _player.SetNameAsync(currentName);
-            await _player.SetColorAsync(currentColor);
-        }
-
-        private async ValueTask shootPlayer(IInnerPlayerControl toShoot)
-        {
+            var toKill = new List<int>();
             if (ammo < 1)
             {
-                await lawResponse("You have no bullets left");
-                return;
+                await _player.SendChatToPlayerAsync("You have no bullets left", _player);
+                return toKill;
             }
             ammo--;
+            toKill.Add(toShoot.OwnerId);
             if (!toShoot.PlayerInfo.IsImpostor)
             {
-                await lawResponse("You shot a crewmate!");
-                await _player.SetExiledAsync();
+                await _player.SendChatToPlayerAsync("You shot a crewmate! You've killed yourself out of guilt", _player);
+                toKill.Add(_player.OwnerId);
             }
+            return toKill;
         }
 
         public override async ValueTask<HandlerAction> HandlePlayerChat(IPlayerChatEvent e)
         {
-            if (e.Message.StartsWith("/") && e.PlayerControl.PlayerInfo.PlayerName == _player.PlayerInfo.PlayerName)
+            if (e.Message.StartsWith("/") && e.ClientPlayer.Client.Id == _player.OwnerId)
             {
                 String commandParsePattern = @"/shoot ((?:\w\s?)+)";
                 var parsedCommand = Regex.Match(e.Message, commandParsePattern);
@@ -113,10 +96,15 @@ namespace Roles.Crew
                     {
                         if (player.Character.PlayerInfo.PlayerName == parsedCommand.Groups[1].Value)
                         {
-                            await shootPlayer(player.Character);
-                            return new HandlerAction(ResultTypes.KillExilePlayer, new List<int> {player.Client.Id});
+                            var toKill = await shootPlayer(player.Character);
+                            if (toKill.Count > 0)
+                            {
+                                return new HandlerAction(ResultTypes.KillExile, toKill);
+                            }
+                            return new HandlerAction(ResultTypes.NoAction);
                         }
                     }
+                    await _player.SendChatToPlayerAsync("Could not find a player with that name", _player);
                 }
             }
             return new HandlerAction(ResultTypes.NoAction);
@@ -131,13 +119,14 @@ namespace Roles.Crew
         public Cop(IInnerPlayerControl parent) : base(parent)
         {
             _listeners.Add(ListenerTypes.OnPlayerChat);
+            _listeners.Add(ListenerTypes.OnMeetingEnded);
             RoleType = RoleTypes.Cop;
             usedInvestigate = false;
         }
 
         public override async ValueTask<HandlerAction> HandlePlayerChat(IPlayerChatEvent e)
         {
-            if (e.Message.StartsWith("/") && e.PlayerControl.PlayerInfo.PlayerName == _player.PlayerInfo.PlayerName)
+            if (e.Message.StartsWith("/") && e.ClientPlayer.Client.Id == _player.OwnerId)
             {
                 String commandParsePattern = @"/investigate ((?:\w\s?)+)";
                 var parsedCommand = Regex.Match(e.Message, commandParsePattern);
@@ -151,11 +140,11 @@ namespace Roles.Crew
                             {
                                 if (player.Character.PlayerInfo.IsImpostor)
                                 {
-                                    await _player.SendChatToPlayerAsync($"{player.Character.PlayerInfo.PlayerName} is an impostor");
+                                    await _player.SendChatToPlayerAsync($"{player.Character.PlayerInfo.PlayerName} is an impostor", _player);
                                 }
                                 else
                                 {
-                                    await _player.SendChatToPlayerAsync($"{player.Character.PlayerInfo.PlayerName} is a crewmate");
+                                    await _player.SendChatToPlayerAsync($"{player.Character.PlayerInfo.PlayerName} is a crewmate", _player);
                                 }
                                 break;
                             }
@@ -186,13 +175,14 @@ namespace Roles.Crew
         public InsaneCop(IInnerPlayerControl parent) : base(parent)
         {
             _listeners.Add(ListenerTypes.OnPlayerChat);
+            _listeners.Add(ListenerTypes.OnMeetingEnded);
             RoleType = RoleTypes.InsaneCop;
             usedInvestigate = false;
         }
 
         public override async ValueTask<HandlerAction> HandlePlayerChat(IPlayerChatEvent e)
         {
-            if (e.Message.StartsWith("/") && e.PlayerControl.PlayerInfo.PlayerName == _player.PlayerInfo.PlayerName)
+            if (e.Message.StartsWith("/") && e.ClientPlayer.Client.Id == _player.OwnerId)
             {
                 String commandParsePattern = @"/investigate ((?:\w\s?)+)";
                 var parsedCommand = Regex.Match(e.Message, commandParsePattern);
@@ -206,11 +196,11 @@ namespace Roles.Crew
                             {
                                 if (player.Character.PlayerInfo.IsImpostor)
                                 {
-                                    await _player.SendChatToPlayerAsync($"{player.Character.PlayerInfo.PlayerName} is a crewmate");
+                                    await _player.SendChatToPlayerAsync($"{player.Character.PlayerInfo.PlayerName} is a crewmate", _player);
                                 }
                                 else
                                 {
-                                    await _player.SendChatToPlayerAsync($"{player.Character.PlayerInfo.PlayerName} is an impostor");
+                                    await _player.SendChatToPlayerAsync($"{player.Character.PlayerInfo.PlayerName} is an impostor", _player);
                                 }
                                 break;
                             }
@@ -219,7 +209,7 @@ namespace Roles.Crew
                     }
                     else
                     {
-                        await _player.SendChatToPlayerAsync("You may only investigate 1 player every meeting");
+                        await _player.SendChatToPlayerAsync("You may only investigate 1 player every meeting", _player);
                     }
                 }
             }
@@ -240,13 +230,14 @@ namespace Roles.Crew
         public ConfusedCop(IInnerPlayerControl parent) : base(parent)
         {
             _listeners.Add(ListenerTypes.OnPlayerChat);
+            _listeners.Add(ListenerTypes.OnMeetingEnded);
             RoleType = RoleTypes.ConfusedCop;
             usedInvestigate = false;
         }
 
         public override async ValueTask<HandlerAction> HandlePlayerChat(IPlayerChatEvent e)
         {
-            if (e.Message.StartsWith("/") && e.PlayerControl.PlayerInfo.PlayerName == _player.PlayerInfo.PlayerName)
+            if (e.Message.StartsWith("/") && e.ClientPlayer.Client.Id == _player.OwnerId)
             {
                 String commandParsePattern = @"/investigate ((?:\w\s?)+)";
                 var parsedCommand = Regex.Match(e.Message, commandParsePattern);
@@ -261,11 +252,11 @@ namespace Roles.Crew
                                 Random rng = new Random();
                                 if (player.Character.PlayerInfo.IsImpostor && rng.Next(1, 3) == 2)
                                 {
-                                    await _player.SendChatToPlayerAsync($"{player.Character.PlayerInfo.PlayerName} is an impostor");
+                                    await _player.SendChatToPlayerAsync($"{player.Character.PlayerInfo.PlayerName} is an impostor", _player);
                                 }
                                 else
                                 {
-                                    await _player.SendChatToPlayerAsync($"{player.Character.PlayerInfo.PlayerName} is a crewmate");
+                                    await _player.SendChatToPlayerAsync($"{player.Character.PlayerInfo.PlayerName} is a crewmate", _player);
                                 }
                                 break;
                             }
@@ -274,7 +265,7 @@ namespace Roles.Crew
                     }
                     else
                     {
-                        await _player.SendChatToPlayerAsync("You may only investigate 1 player every meeting");
+                        await _player.SendChatToPlayerAsync("You may only investigate 1 player every meeting", _player);
                     }
                 }
             }
@@ -306,7 +297,7 @@ namespace Roles.Crew
 
         public override async ValueTask<HandlerAction> HandlePlayerChat(IPlayerChatEvent e)
         {
-            if (e.Message.StartsWith("/") && e.PlayerControl.PlayerInfo.PlayerName == _player.PlayerInfo.PlayerName)
+            if (e.Message.StartsWith("/") && e.ClientPlayer.Client.Id == _player.OwnerId)
             {
                 String commandParsePattern = @"/reveal ((?:\w\s?)+)";
                 var parsedCommand = Regex.Match(e.Message, commandParsePattern);
@@ -356,22 +347,26 @@ namespace Roles.Crew
 
             foreach (var player in players)
             {
-                if (player.Character.PlayerInfo.PlayerName != playerName)
+                if (player.Client.Id != _player.OwnerId && !player.Character.PlayerInfo.IsDead)
                 {
                     var currentName = player.Character.PlayerInfo.PlayerName;
                     var currentColor = player.Character.PlayerInfo.ColorId;
+
                     await player.Character.SetNameAsync($"{playerName} (Oracle)");
                     await player.Character.SetColorAsync(playerColor);
-                    await player.Character.SendChatToPlayerAsync(revealMessage, player.Character);
+
+                    await player.Character.SendChatAsync(revealMessage);
+
                     await player.Character.SetNameAsync(currentName);
                     await player.Character.SetColorAsync(currentColor);
+                    break;
                 }
             }
         }
 
         public override async ValueTask<HandlerAction> HandlePlayerExile(IPlayerExileEvent e)
         {
-            if (e.PlayerControl.PlayerInfo.PlayerName == _player.PlayerInfo.PlayerName && toReveal != null)
+            if (e.ClientPlayer.Client.Id == _player.OwnerId && toReveal != null)
             {
                 await revealOnDeath(e.Game.Players);
             }
@@ -380,7 +375,7 @@ namespace Roles.Crew
 
         public override async ValueTask<HandlerAction> HandlePlayerMurder(IPlayerMurderEvent e)
         {
-            if (e.Victim.PlayerInfo.PlayerName == _player.PlayerInfo.PlayerName && toReveal != null)
+            if (e.Victim.OwnerId == _player.OwnerId && toReveal != null)
             {
                 await revealOnDeath(e.Game.Players);
             }
@@ -392,8 +387,8 @@ namespace Roles.Crew
     {
         private bool extinguishLight { get; set; }
         private bool lightExtinguished { get; set; }
-        private Dictionary<byte, String> originalPlayerNames { get; set; }
-        private Dictionary<byte, byte> originalPlayerColors { get; set; }
+        private Dictionary<int, String> originalPlayerNames { get; set; }
+        private Dictionary<int, byte> originalPlayerColors { get; set; }
         public new static int TotalAllowed = 1;
 
         public Lightkeeper(IInnerPlayerControl parent) : base(parent)
@@ -405,13 +400,13 @@ namespace Roles.Crew
             RoleType = RoleTypes.Lightkeeper;
             extinguishLight = false;
             lightExtinguished = false;
-            originalPlayerNames = new Dictionary<byte, String>();
-            originalPlayerColors = new Dictionary<byte, byte>();
+            originalPlayerNames = new Dictionary<int, String>();
+            originalPlayerColors = new Dictionary<int, byte>();
         }
 
         public override ValueTask<HandlerAction> HandlePlayerMurder(IPlayerMurderEvent e)
         {
-            if (e.Victim == _player)
+            if (e.Victim.OwnerId == _player.OwnerId)
             {
                 extinguishLight = true;
             }
@@ -420,48 +415,48 @@ namespace Roles.Crew
 
         public override ValueTask<HandlerAction> HandlePlayerExile(IPlayerExileEvent e)
         {
-            if (e.PlayerControl == _player)
+            if (e.ClientPlayer.Client.Id == _player.OwnerId)
             {
                 extinguishLight = true;
             }
             return ValueTask.FromResult(new HandlerAction(ResultTypes.NoAction));
         }
 
-        public override ValueTask<HandlerAction> HandleMeetingStart(IMeetingStartedEvent e)
+        public override async ValueTask<HandlerAction> HandleMeetingStart(IMeetingStartedEvent e)
         {
             if (extinguishLight)
             {
                 lightExtinguished = true;
                 saveSettings(e);
                 e.Game.Options.AnonymousVotes = true;
-                e.Game.SyncSettingsAsync();
+                await e.Game.SyncSettingsAsync();
                 foreach (var player in e.Game.Players)
                 {
-                    originalPlayerNames[player.Character.PlayerId] = player.Character.PlayerInfo.PlayerName;
-                    originalPlayerColors[player.Character.PlayerId] = player.Character.PlayerInfo.ColorId;
-                    player.Character.SetNameAsync("");
-                    player.Character.SetColorAsync(ColorType.Black);
+                    originalPlayerNames[player.Client.Id] = player.Character.PlayerInfo.PlayerName;
+                    originalPlayerColors[player.Client.Id] = player.Character.PlayerInfo.ColorId;
+                    await player.Character.SetNameAsync("");
+                    await player.Character.SetColorAsync(ColorType.Black);
                 }
             }
-            return ValueTask.FromResult(new HandlerAction(ResultTypes.NoAction));
+            return new HandlerAction(ResultTypes.NoAction);
         }
 
-        public override ValueTask<HandlerAction> HandleMeetingEnd(IMeetingEndedEvent e)
+        public override async ValueTask<HandlerAction> HandleMeetingEnd(IMeetingEndedEvent e)
         {
             if (lightExtinguished)
             {
                 loadSettings(e);
                 foreach (var player in e.Game.Players)
                 {
-                    var origPlayerName = originalPlayerNames[player.Character.PlayerId];
-                    var origPlayerColor = originalPlayerColors[player.Character.PlayerId];
-                    player.Character.SetNameAsync(origPlayerName);
-                    player.Character.SetColorAsync(origPlayerColor);
+                    var origPlayerName = originalPlayerNames[player.Client.Id];
+                    var origPlayerColor = originalPlayerColors[player.Client.Id];
+                    await player.Character.SetNameAsync(origPlayerName);
+                    await player.Character.SetColorAsync(origPlayerColor);
                 }
                 extinguishLight = false;
                 lightExtinguished = false;
             }
-            return ValueTask.FromResult(new HandlerAction(ResultTypes.NoAction));
+            return new HandlerAction(ResultTypes.NoAction);
         }
     }
 
@@ -481,7 +476,7 @@ namespace Roles.Crew
 
         public override async ValueTask<HandlerAction> HandlePlayerChat(IPlayerChatEvent e)
         {
-            if (e.Message.StartsWith("/") && e.PlayerControl.OwnerId == _player.OwnerId)
+            if (e.Message.StartsWith("/") && e.ClientPlayer.Client.Id == _player.OwnerId)
             {
                 String commandParsePattern = @"/protect ((?:\w\s?)+)";
                 var parsedCommand = Regex.Match(e.Message, commandParsePattern);
@@ -495,7 +490,7 @@ namespace Roles.Crew
                             {
                                 usedProtect = true;
                                 toProtect = player.Client.Id;
-                                await _player.SendChatToPlayerAsync($"{player.Character.PlayerInfo.PlayerName} will be protected once during the next meeting");
+                                await _player.SendChatToPlayerAsync($"{player.Character.PlayerInfo.PlayerName} will be protected once during the next meeting", _player);
                                 return new HandlerAction(ResultTypes.NoAction);
                             }
                         }
@@ -514,7 +509,7 @@ namespace Roles.Crew
             if (usedProtect)
             {
                 usedProtect = false;
-                return ValueTask.FromResult(new HandlerAction(ResultTypes.ProtectPlayer, new List<int> {toProtect}));
+                return ValueTask.FromResult(new HandlerAction(ResultTypes.Protect, new List<int> {toProtect}));
             }
             return ValueTask.FromResult(new HandlerAction(ResultTypes.NoAction));
         }

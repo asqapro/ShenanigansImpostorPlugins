@@ -76,7 +76,7 @@ namespace Impostor.Plugins.Commands.Handlers
                 }
                 else if (parsedCommand == ValidateResult.DoesNotExist)
                 {
-                    response = "Command does not exist";
+                    //response = "Command does not exist";
                 }
                 else if (parsedCommand == ValidateResult.MissingTarget)
                 {

@@ -52,16 +52,16 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
 
             List<RoleTypes> crewNeutralRoles = new List<RoleTypes> 
             {
-                RoleTypes.Crew,
+                //RoleTypes.Crew,
                 RoleTypes.Medium,
-                RoleTypes.Sheriff,
+                /*RoleTypes.Sheriff,
                 RoleTypes.Jester,
                 RoleTypes.Cop,
                 RoleTypes.InsaneCop,
                 RoleTypes.ConfusedCop,
                 RoleTypes.Oracle,
                 RoleTypes.Lightkeeper,
-                RoleTypes.Doctor
+                RoleTypes.Doctor*/
             };
 
             List<RoleTypes> impostorRoles = new List<RoleTypes> 

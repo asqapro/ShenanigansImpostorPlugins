@@ -146,10 +146,10 @@ namespace Managers.Roles
             {
                 switch (handlerResult.Action)
                 {
-                    case ResultTypes.KillExilePlayer:
+                    case ResultTypes.KillExile:
                         await handleKillExile(PlayerRoles[player]);
                         break;
-                    case ResultTypes.ProtectPlayer:
+                    case ResultTypes.Protect:
                         handleProtectPlayer(PlayerRoles[player]);
                         break;
                     default:
