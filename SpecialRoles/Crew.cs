@@ -75,11 +75,14 @@ namespace Roles.Crew
                 return toKill;
             }
             ammo--;
-            toKill.Add(toShoot.OwnerId);
             if (!toShoot.PlayerInfo.IsImpostor)
             {
                 await _player.SendChatToPlayerAsync("You shot a crewmate! You've killed yourself out of guilt", _player);
                 toKill.Add(_player.OwnerId);
+            }
+            else
+            {
+                toKill.Add(toShoot.OwnerId);
             }
             return toKill;
         }
@@ -111,16 +114,16 @@ namespace Roles.Crew
         }
     }
 
-    public class Cop : InnerPlayerControlRole
+    public class Deputy : InnerPlayerControlRole
     {
         private bool usedInvestigate { get; set; }
         public new static int TotalAllowed = 1;
 
-        public Cop(IInnerPlayerControl parent) : base(parent)
+        public Deputy(IInnerPlayerControl parent) : base(parent)
         {
             _listeners.Add(ListenerTypes.OnPlayerChat);
             _listeners.Add(ListenerTypes.OnMeetingEnded);
-            RoleType = RoleTypes.Cop;
+            RoleType = RoleTypes.Deputy;
             usedInvestigate = false;
         }
 
@@ -167,16 +170,16 @@ namespace Roles.Crew
         }
     }
 
-    public class InsaneCop : InnerPlayerControlRole
+    public class InsaneDeputy : InnerPlayerControlRole
     {
         private bool usedInvestigate { get; set; }
         public new static int TotalAllowed = 1;
 
-        public InsaneCop(IInnerPlayerControl parent) : base(parent)
+        public InsaneDeputy(IInnerPlayerControl parent) : base(parent)
         {
             _listeners.Add(ListenerTypes.OnPlayerChat);
             _listeners.Add(ListenerTypes.OnMeetingEnded);
-            RoleType = RoleTypes.InsaneCop;
+            RoleType = RoleTypes.InsaneDeputy;
             usedInvestigate = false;
         }
 
@@ -222,16 +225,16 @@ namespace Roles.Crew
             return ValueTask.FromResult(new HandlerAction(ResultTypes.NoAction));
         }
     }
-    public class ConfusedCop : InnerPlayerControlRole
+    public class ConfusedDeputy : InnerPlayerControlRole
     {
         private bool usedInvestigate { get; set; }
         public new static int TotalAllowed = 1;
 
-        public ConfusedCop(IInnerPlayerControl parent) : base(parent)
+        public ConfusedDeputy(IInnerPlayerControl parent) : base(parent)
         {
             _listeners.Add(ListenerTypes.OnPlayerChat);
             _listeners.Add(ListenerTypes.OnMeetingEnded);
-            RoleType = RoleTypes.ConfusedCop;
+            RoleType = RoleTypes.ConfusedDeputy;
             usedInvestigate = false;
         }
 

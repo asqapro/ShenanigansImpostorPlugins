@@ -67,17 +67,17 @@ namespace Managers.Roles
                     role = new VoodooLady(parentPlayer.Character);
                     roleMessage = "You are a voodoo lady. \nPick a kill word and target using /setkillword";
                     break;
-                case RoleTypes.Cop:
-                    role = new Cop(parentPlayer.Character);
-                    roleMessage = "You are a cop. \nYou can find impostors by using /investigate on players";
+                case RoleTypes.Deputy:
+                    role = new Deputy(parentPlayer.Character);
+                    roleMessage = "You are a deputy. \nYou can find impostors by using /investigate on players";
                     break;
-                case RoleTypes.InsaneCop:
-                    role = new InsaneCop(parentPlayer.Character);
-                    roleMessage = "You are a cop. \nYou can find impostors by using /investigate on players";
+                case RoleTypes.InsaneDeputy:
+                    role = new InsaneDeputy(parentPlayer.Character);
+                    roleMessage = "You are a deputy. \nYou can find impostors by using /investigate on players";
                     break;
-                case RoleTypes.ConfusedCop:
-                    role = new ConfusedCop(parentPlayer.Character);
-                    roleMessage = "You are a cop. \nYou can find impostors by using /investigate on players";
+                case RoleTypes.ConfusedDeputy:
+                    role = new ConfusedDeputy(parentPlayer.Character);
+                    roleMessage = "You are a deputy. \nYou can find impostors by using /investigate on players";
                     break;
                 case RoleTypes.Oracle:
                     role = new Oracle(parentPlayer.Character);

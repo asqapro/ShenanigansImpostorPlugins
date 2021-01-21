@@ -56,9 +56,9 @@ namespace Impostor.Plugins.SpecialRoles.Handlers
                 RoleTypes.Medium,
                 /*RoleTypes.Sheriff,
                 RoleTypes.Jester,
-                RoleTypes.Cop,
-                RoleTypes.InsaneCop,
-                RoleTypes.ConfusedCop,
+                RoleTypes.Deputy,
+                RoleTypes.InsaneDeputy,
+                RoleTypes.ConfusedDeputy,
                 RoleTypes.Oracle,
                 RoleTypes.Lightkeeper,
                 RoleTypes.Doctor*/

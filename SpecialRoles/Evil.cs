@@ -145,6 +145,7 @@ namespace Roles.Evil
         public new static int TotalAllowed = 1;
         private ICollection<IInnerPlayerControl> dousedPlayers { get; set; }
         private bool dousedPlayer { get; set; }
+        private int dousedCountdown { get; set; }
         private int maxDoused { get; set; }
 
         public Arsonist(IInnerPlayerControl parent) : base(parent)
@@ -155,6 +156,7 @@ namespace Roles.Evil
             RoleType = RoleTypes.Arsonist;
             dousedPlayers = new List<IInnerPlayerControl>();
             dousedPlayer = false;
+            dousedCountdown = 3;
             maxDoused = 2;
         }
 
@@ -182,6 +184,10 @@ namespace Roles.Evil
 
         public override ValueTask<HandlerAction> HandlePlayerMovement(IPlayerMovementEvent e)
         {
+            if (dousedPlayer || dousedPlayers.Count >= maxDoused)
+            {
+                return ValueTask.FromResult(new HandlerAction(ResultTypes.NoAction));
+            }
             foreach (var otherPlayer in e.Game.Players)
             {
                 if (otherPlayer == null)
@@ -193,7 +199,7 @@ namespace Roles.Evil
                     continue;
                 }
                 var distance = Vector2.Distance(_player.NetworkTransform.Position, otherPlayer.Character.NetworkTransform.Position);
-                if (distance < 0.6 && !dousedPlayer && dousedPlayers.Count < maxDoused)
+                if (distance < 0.6 && !otherPlayer.Character.PlayerInfo.IsImpostor)
                 {
                     dousedPlayers.Add(otherPlayer.Character);
                     dousedPlayer = true;
@@ -205,6 +211,15 @@ namespace Roles.Evil
         public override ValueTask<HandlerAction> HandleMeetingStart(IMeetingStartedEvent e)
         {
             dousedPlayer = false;
+            if (dousedCountdown == 1 && !_player.PlayerInfo.IsDead)
+            {
+                _player.SendChatToPlayerAsync("The gas will wear off next round. Ignite this round, or lose the chance", _player);
+            }
+            else if (dousedCountdown == 0 && !_player.PlayerInfo.IsDead && dousedPlayers.Count() > 0)
+            {
+                dousedPlayers.Clear();
+                 _player.SendChatToPlayerAsync("The gas has worn off");
+            }
             return ValueTask.FromResult(new HandlerAction(ResultTypes.NoAction));
         }
     }
