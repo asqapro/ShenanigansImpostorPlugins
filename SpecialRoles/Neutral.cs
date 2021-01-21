@@ -10,10 +10,10 @@ namespace Roles.Neutral
     public class Jester : InnerPlayerControlRole
     {
         public new static int TotalAllowed = 1;
-        private int votedJesterCount;
-        private int votedSkipCount;
-        private bool meetingActive;
-        private Dictionary<String, int> votedOtherCount;
+        private int votedJesterCount { get; set; }
+        private int votedSkipCount { get; set; }
+        private bool meetingActive { get; set; }
+        private Dictionary<int, int> votedOtherCount { get; set; }
 
         public Jester(IInnerPlayerControl parent) : base(parent)
         {
@@ -24,7 +24,7 @@ namespace Roles.Neutral
             votedJesterCount = 0;
             votedSkipCount = 0;
             meetingActive = false;
-            votedOtherCount = new Dictionary<string, int>();
+            votedOtherCount = new Dictionary<int, int>();
         }
 
         public override ValueTask<HandlerAction> HandlePlayerVote(IPlayerVotedEvent e)
@@ -37,18 +37,18 @@ namespace Roles.Neutral
             {
                 votedSkipCount++;
             }
-            else if (e.VotedFor.PlayerInfo.PlayerName == _player.PlayerInfo.PlayerName)
+            else if (e.VotedFor.OwnerId == _player.OwnerId)
             {
                 votedJesterCount++;
             }
             else
             {
-                var votedName = e.VotedFor.PlayerInfo.PlayerName;
-                if (!votedOtherCount.ContainsKey(votedName))
+                var votedFor = e.VotedFor.OwnerId;
+                if (!votedOtherCount.ContainsKey(votedFor))
                 {
-                    votedOtherCount[votedName] = 0;
+                    votedOtherCount[votedFor] = 0;
                 }
-                votedOtherCount[votedName]++;
+                votedOtherCount[votedFor]++;
             }
             return ValueTask.FromResult(new HandlerAction(ResultTypes.NoAction));
         }
@@ -85,15 +85,19 @@ namespace Roles.Neutral
                 var playerColor = _player.PlayerInfo.ColorId;
                 foreach (var player in e.Game.Players)
                 {
-                    if (player.Character.PlayerInfo.PlayerName != playerName)
+                    if (player.Client.Id != _player.OwnerId)
                     {
                         var currentName = player.Character.PlayerInfo.PlayerName;
                         var currentColor = player.Character.PlayerInfo.ColorId;
+
                         await player.Character.SetNameAsync($"{playerName} (Jester)");
                         await player.Character.SetColorAsync(playerColor);
-                        await player.Character.SendChatToPlayerAsync("The jester has won!", player.Character);
+
+                        await player.Character.SendChatAsync("The jester has won!");
+
                         await player.Character.SetNameAsync(currentName);
                         await player.Character.SetColorAsync(currentColor);
+                        break;
                     }
                 }
             }

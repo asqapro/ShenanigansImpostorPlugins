@@ -21,7 +21,7 @@ namespace Roles.Evil
     public class Hitman : InnerPlayerControlRole
     {
         public new static int TotalAllowed = 1;
-        private int ammo;
+        private int ammo { get; set; }
 
         public Hitman(IInnerPlayerControl parent) : base(parent)
         {
@@ -72,9 +72,9 @@ namespace Roles.Evil
     public class VoodooLady : InnerPlayerControlRole
     {
         public new static int TotalAllowed = 1;
-        private String killWord;
-        private int killTarget;
-        private bool targetKilled;
+        private String killWord { get; set; }
+        private int killTarget { get; set; }
+        private bool targetKilled { get; set; }
 
         public VoodooLady(IInnerPlayerControl parent) : base(parent)
         {
@@ -143,8 +143,9 @@ namespace Roles.Evil
     public class Arsonist : InnerPlayerControlRole
     {
         public new static int TotalAllowed = 1;
-        private ICollection<IInnerPlayerControl> dousedPlayers;
-        private bool dousedPlayer;
+        private ICollection<IInnerPlayerControl> dousedPlayers { get; set; }
+        private bool dousedPlayer { get; set; }
+        private int maxDoused { get; set; }
 
         public Arsonist(IInnerPlayerControl parent) : base(parent)
         {
@@ -154,6 +155,7 @@ namespace Roles.Evil
             RoleType = RoleTypes.Arsonist;
             dousedPlayers = new List<IInnerPlayerControl>();
             dousedPlayer = false;
+            maxDoused = 2;
         }
 
         public override async ValueTask<HandlerAction> HandlePlayerChat(IPlayerChatEvent e)
@@ -191,7 +193,7 @@ namespace Roles.Evil
                     continue;
                 }
                 var distance = Vector2.Distance(_player.NetworkTransform.Position, otherPlayer.Character.NetworkTransform.Position);
-                if (distance < 0.6 && !dousedPlayer && dousedPlayers.Count < 2)
+                if (distance < 0.6 && !dousedPlayer && dousedPlayers.Count < maxDoused)
                 {
                     dousedPlayers.Add(otherPlayer.Character);
                     dousedPlayer = true;
